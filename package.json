@@ -1,0 +1,21 @@
+{
+  "name": "sehatku-bot",
+  "version": "1.0.0",
+  "description": "Chatbot AI WhatsApp untuk konsultasi kesehatan, rekomendasi solusi, dan pencarian faskes terdekat (tugas kuliah)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "simulasi": "node simulasi.js",
+    "test": "node --test",
+    "cek-ai": "node scripts/cek-ai.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.34.7"
+  },
+  "license": "MIT"
+}
