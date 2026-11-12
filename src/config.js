@@ -12,6 +12,12 @@ module.exports = {
 
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY || '', 
 
+  // Login WhatsApp
+  PAIRING_NUMBER: process.env.PAIRING_NUMBER || '', // diisi → login dengan kode tautan, tanpa QR
+  PANEL_PORT: parseInt(process.env.PANEL_PORT || '0', 10) || 0, // 0 = halaman web login mati
+  PANEL_TOKEN: process.env.PANEL_TOKEN || '',
+  CHROME_PATH: process.env.CHROME_PATH || '', // VPS: /usr/bin/google-chrome
+
   BOT_NAME: process.env.BOT_NAME || 'Rara',
   AI_TIMEOUT_MS: Number.isFinite(batasAI) && batasAI >= 5000 && batasAI <= 120000 ? Math.round(batasAI) : 45000,
   RADIUS_METER: parseInt(process.env.RADIUS_METER || '3000', 10),
