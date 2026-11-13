@@ -46,7 +46,19 @@ function pasang(client, { nomorMentah = '', port = 0, token = '', log = console 
     qrTerminal.generate(qr, { small: true });
   });
 
-  client.on('authenticated', () => { status.info = 'Login berhasil, memuat WhatsApp...'; });
+  // Setelah scan/kode diterima, QR lama tidak boleh tampil lagi.
+  client.on('authenticated', () => {
+    status.keadaan = 'memuat';
+    status.qr = status.kode = null;
+    status.info = 'Login berhasil, memuat chat WhatsApp...';
+    log.log('[Login] Login berhasil. Memuat chat WhatsApp, biarkan HP nomor bot tetap online...');
+  });
+  client.on('loading_screen', (persen) => {
+    status.keadaan = 'memuat';
+    status.qr = status.kode = null;
+    status.info = `Memuat chat WhatsApp... ${persen}%`;
+    log.log(`[Login] Memuat WhatsApp ${persen}%`);
+  });
   client.on('ready', () => {
     status.keadaan = 'terhubung';
     status.kode = status.qr = null;
@@ -138,6 +150,7 @@ async function muat(){
   try{
     const s=await (await fetch('/status?token='+encodeURIComponent(token))).json();let h='';
     if(s.keadaan==='terhubung') h='<span class="badge ok">✅ Terhubung</span><p>'+esc(s.info)+'</p><p class="abu">Bot sudah aktif. Halaman ini boleh ditutup.</p>';
+    else if(s.keadaan==='memuat') h='<span class="badge tunggu">🔄 Sudah login</span><p>'+esc(s.info)+'</p><p class="abu">Tidak perlu scan lagi. Biarkan HP nomor bot tetap online sampai status menjadi Terhubung.</p>';
     else if(s.keadaan==='terputus') h='<span class="badge putus">⚠️ Terputus</span><p>'+esc(s.info)+'</p>';
     else if(s.kode) h='<span class="badge tunggu">⏳ Menunggu ditautkan</span><h2>Kode tautan</h2><div class="kode">'+esc(s.kode)+'</div>'+
       '<p class="abu" style="text-align:center">untuk nomor +'+esc(s.nomor)+' · diperbarui otomatis ±3 menit</p>'+
