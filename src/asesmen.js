@@ -28,7 +28,7 @@ function catat(s, teks) {
   const dataLain = /\b(usia|umur|suhu|nyeri|sejak)\b|^\d/.test(t) ||
     (s.lanjutan === 'risiko' && /demam|mual|batuk|pilek|pegal|sakit kepala|minum obat/i.test(t));
   if (['alergi', 'gejala', 'risiko', 'obat'].includes(s.lanjutan) && t.length <= 500 && !t.includes('?') && !dataLain) a[s.lanjutan] = t;
-  if (/(?:sudah|belum|tidak|sedang)\s+(?:pernah\s+)?(?:minum|konsumsi|mengonsumsi|pakai)\s+obat|(?:sudah|sedang)\s+minum\s+\w+/i.test(t)) a.obat = t;
+  if (/(?:sudah|belum|tidak|sedang)\s+(?:pernah\s+)?(?:minum|konsumsi|mengonsumsi|pakai)\s+obat|(?:sudah|sedang|baru|sempat|tadi)\s+minum\s+\w+/i.test(t)) a.obat = t;
   if (/riwayat penyakit|alergi obat|(?:tidak|nggak|gak) (?:ada|punya) (?:penyakit|alergi)|(?:punya|memiliki) (?:asma|diabetes|hipertensi|penyakit)|(?:sedang|tidak) hamil|sedang menyusui/i.test(t)) a.risiko = t;
   // Gejala penyerta yang sudah diberikan tidak ditanyakan lagi.
   const jumlah = [/demam|meriang/i, /batuk/i, /pilek/i, /sakit kepala|pusing/i, /mual/i, /pegal/i, /tenggorokan/i, /diare/i, /bentol|gatal|ruam/i].filter(re => re.test(keluhanAktif(t))).length;

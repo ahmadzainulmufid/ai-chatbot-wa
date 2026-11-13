@@ -1,8 +1,95 @@
 // Transport diisolasi agar dapat diuji tanpa login atau mengirim ke WhatsApp asli.
-function buatPenerima({ client, handle, log = console, waktu = Date.now }) {
+//
+// Mode interaktif (opsional):
+// - Sapaan pertama dikirim sebagai banner gambar + menu polling yang bisa diketuk.
+// - Menu dan pilihan jenis faskes dikirim sebagai polling.
+// - Pilihan polling diproses persis seperti pengguna mengetik angka/kata menu.
+// Bila polling/gambar gagal dikirim, otomatis kembali ke teks biasa.
+const P = require('./pesan');
+
+const MENU_POLLING = {
+  judul: 'Pilih layanan Rara 👇 (ketuk salah satu, atau langsung ketik keluhan Anda)',
+  opsi: [
+    ['🩺 Konsultasi Kesehatan', '1'],
+    ['💡 Rekomendasi Solusi Keluhan', '2'],
+    ['📍 Cari Klinik / Puskesmas / Apotek', '3'],
+    ['🚑 Nomor Darurat', '4'],
+    ['📋 Ringkasan Konsultasi', '5'],
+    ['ℹ️ Tentang Rara & Privasi', '6'],
+  ],
+};
+
+const FASKES_POLLING = {
+  judul: 'Jenis fasilitas kesehatan yang dicari:',
+  opsi: [
+    ['🏥 Semua faskes', 'semua'],
+    ['💊 Apotek', 'apotek'],
+    ['🏛️ Puskesmas', 'puskesmas'],
+    ['🩺 Klinik', 'klinik'],
+    ['🚑 Rumah Sakit', 'rs'],
+  ],
+};
+
+const BARIS_JENIS_FASKES = /\n*Mau jenis tertentu\? Ketik:[^\n]*/;
+
+// Ubah satu balasan teks menjadi daftar kiriman (teks / gambar / polling).
+function rencanaKiriman(teks, { interaktif, adaBanner }) {
+  if (!interaktif) return [{ tipe: 'teks', teks }];
+  if (teks.includes(P.MENU)) {
+    const sebelum = teks.replace(P.MENU, '').replace(/\n{3,}/g, '\n\n').trim();
+    const kiriman = [];
+    if (teks === P.SAPAAN) {
+      const sapaan = sebelum + '\n\nKetuk pilihan pada polling di bawah 👇 atau langsung ceritakan keluhan Anda.\nPerintah: *menu*, *ringkasan*, *keluhan baru*.';
+      kiriman.push(adaBanner ? { tipe: 'gambar', caption: sapaan, cadangan: sapaan } : { tipe: 'teks', teks: sapaan });
+    } else if (sebelum) {
+      kiriman.push({ tipe: 'teks', teks: sebelum });
+    }
+    kiriman.push({ tipe: 'polling', ...MENU_POLLING, cadangan: P.MENU });
+    return kiriman;
+  }
+  if (BARIS_JENIS_FASKES.test(teks)) {
+    return [
+      { tipe: 'teks', teks: teks.replace(BARIS_JENIS_FASKES, '').trim() },
+      { tipe: 'polling', ...FASKES_POLLING, cadangan: 'Mau jenis tertentu? Ketik: *apotek*, *puskesmas*, *klinik*, atau *rs*.' },
+    ];
+  }
+  return [{ tipe: 'teks', teks }];
+}
+
+function buatPenerima({ client, handle, log = console, waktu = Date.now, interaktif = false, Poll = null, MessageMedia = null, banner = null }) {
   const antrean = new Map();
   const terlihat = new Map();
+  const polling = new Map(); // id pesan polling → { chatId, nilai[] }
   const TTL = 10 * 60000;
+  let media = null;
+  const adaBanner = !!(banner && MessageMedia);
+
+  function ambilBanner() {
+    if (!media) media = MessageMedia.fromFilePath(banner);
+    return media;
+  }
+
+  async function kirimSatu(chatId, item, kirimTeks) {
+    if (item.tipe === 'teks') return kirimTeks(item.teks);
+    try {
+      if (item.tipe === 'gambar') {
+        await client.sendMessage(chatId, ambilBanner(), { caption: item.caption });
+        return;
+      }
+      if (item.tipe === 'polling' && Poll) {
+        const terkirim = await client.sendMessage(chatId, new Poll(item.judul, item.opsi.map(o => o[0]), { allowMultipleAnswers: false }));
+        const id = terkirim?.id?._serialized;
+        if (id) {
+          polling.set(id, { chatId, nilai: item.opsi.map(o => o[1]) });
+          if (polling.size > 1000) polling.delete(polling.keys().next().value);
+        }
+        return;
+      }
+    } catch (e) {
+      log.error(`Kirim ${item.tipe} gagal, memakai teks biasa.`);
+    }
+    return kirimTeks(item.cadangan);
+  }
 
   async function proses(msg) {
     let chat;
@@ -24,7 +111,12 @@ function buatPenerima({ client, handle, log = console, waktu = Date.now }) {
         await client.sendMessage(msg.from, teks, { linkPreview: false });
       };
       const balasan = await handle(msg.from, input, kirim);
-      for (const teks of balasan) await kirim(teks);
+      for (const teks of balasan) {
+        for (const item of rencanaKiriman(teks, { interaktif, adaBanner })) {
+          mengirim = true;
+          await kirimSatu(msg.from, item, kirim);
+        }
+      }
       return { status: 'sent' };
     } catch {
       log.error('Pemrosesan/pengiriman WhatsApp gagal; isi pesan tidak dicatat.');
@@ -56,7 +148,26 @@ function buatPenerima({ client, handle, log = console, waktu = Date.now }) {
     tugas.then(bersihkan, bersihkan);
     return tugas;
   }
+
+  // Pilihan polling → diperlakukan sebagai pesan teks berisi nilai pilihan.
+  function terimaPilihan(vote) {
+    const pollId = vote?.parentMessage?.id?._serialized || vote?.parentMsgKey?._serialized;
+    const info = pollId && polling.get(pollId);
+    const dipilih = vote?.selectedOptions?.[0];
+    if (!info || !dipilih) return Promise.resolve({ status: 'ignored' }); // polling lain / pilihan dibatalkan
+    const nilai = info.nilai[dipilih.localId];
+    if (nilai === undefined) return Promise.resolve({ status: 'ignored' });
+    return terima({
+      from: info.chatId,
+      type: 'chat',
+      body: nilai,
+      id: { _serialized: `pilih-${pollId}-${dipilih.localId}-${vote.interractedAtTs || waktu()}` },
+      getChat: async () => client.getChatById(info.chatId),
+    });
+  }
+
+  terima.pilihan = terimaPilihan;
   return terima;
 }
 
-module.exports = { buatPenerima };
+module.exports = { buatPenerima, rencanaKiriman, MENU_POLLING, FASKES_POLLING };

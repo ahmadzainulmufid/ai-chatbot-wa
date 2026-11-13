@@ -17,6 +17,8 @@ module.exports = {
   PANEL_PORT: parseInt(process.env.PANEL_PORT || '0', 10) || 0, // 0 = halaman web login mati
   PANEL_TOKEN: process.env.PANEL_TOKEN || '',
   CHROME_PATH: process.env.CHROME_PATH || '', // VPS: /usr/bin/google-chrome
+  // Banner sapaan + menu polling yang bisa diketuk. MENU_INTERAKTIF=false → menu angka biasa.
+  MENU_INTERAKTIF: !/^(false|0|tidak|no)$/i.test(process.env.MENU_INTERAKTIF || 'true'),
 
   BOT_NAME: process.env.BOT_NAME || 'Rara',
   AI_TIMEOUT_MS: Number.isFinite(batasAI) && batasAI >= 5000 && batasAI <= 120000 ? Math.round(batasAI) : 45000,

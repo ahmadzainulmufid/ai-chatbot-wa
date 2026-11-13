@@ -58,10 +58,19 @@ function cadangan(s, pertanyaan, karenaMutu = false) {
   if (/^(?:[0-9]|1[0-7])\s*tahun$|bulan/.test(s.profil.usia) || /hamil|menyusui/i.test(konteks)) {
     return pembuka + 'Untuk anak, kehamilan, atau menyusui, pilihan penanganan dan obat perlu diperiksa tenaga kesehatan. Jangan menggunakan saran obat dewasa. Hubungi dokter/apoteker dan ceritakan keluhan, durasi, serta obat yang sudah digunakan.\n\nJika ada sulit bernapas, penurunan kesadaran, atau kondisi memburuk cepat, segera ke IGD. Ketik *3* untuk mencari fasilitas kesehatan.';
   }
-  const perluPeriksa = cocok?.judul === 'Sakit Kepala' && /(?:3|4|5|6|7|8|9|\d{2,})\s*hari|minggu|bulan/i.test(s.profil.durasi)
-    ? '\n\nKarena sakit kepala sudah menetap beberapa hari, hubungi dokter untuk pemeriksaan secepatnya, terutama jika ini keluhan baru atau semakin berat.' : '';
-  const informasi = cocok ? balasCadangan(konteks) : 'Rara belum dapat memastikan penyebab keluhan dari informasi ini. Hubungi tenaga kesehatan jika keluhan memburuk atau mengganggu aktivitas.';
-  return pembuka + informasi + perluPeriksa + (pertanyaan ? '\n\n' + pertanyaan : '\n\nInformasi yang diberikan sudah dicatat. Jika belum membaik, hubungi tenaga kesehatan. Ketik *ringkasan* untuk melihat catatan.');
+  const sakitKepalaMenetap = cocok?.judul === 'Sakit Kepala' && /(?:3|4|5|6|7|8|9|\d{2,})\s*hari|minggu|bulan/i.test(s.profil.durasi);
+  if (!cocok) {
+    return pembuka + 'Rara belum dapat memastikan penyebab keluhan dari informasi ini. Hubungi tenaga kesehatan jika keluhan memburuk atau mengganggu aktivitas.' +
+      (pertanyaan ? '\n\n' + pertanyaan : '\n\n🚨 Jika sulit bernapas, nyeri dada, atau kesadaran menurun, segera ke IGD atau hubungi 119.\n\nKetik *ringkasan* untuk melihat catatan.');
+  }
+  return balasCadangan(konteks, {
+    pembuka: pembuka.trim(),
+    pertanyaan,
+    s,
+    keDokterTambahan: sakitKepalaMenetap
+      ? ' Karena sakit kepala sudah menetap beberapa hari, hubungi dokter secepatnya, terutama jika ini keluhan baru atau semakin berat.'
+      : '',
+  });
 }
 
 module.exports = { catat, ringkasan, darurat, cadangan };

@@ -12,6 +12,15 @@ Kebutuhan: Node.js 18+ dan nomor WhatsApp untuk bot.
 Di Linux/macOS gunakan `npm`. Tidak perlu mengganti API key hanya karena model mendapat 404. Model utama Gemini adalah Flash-Lite 3.5 dan cadangannya Flash-Lite 3.1. Setelah timeout, gangguan jaringan, HTTP 404, atau HTTP 500/502/503/504, kode mencoba model cadangan satu kali dengan konteks yang sama. Error auth/kuota tidak diulang. Tiap model mendapat maksimal 12 detik, termasuk membaca body respons: dua percobaan biasanya dibatasi sekitar 24 detik, ditambah penjadwalan proses. AI_TIMEOUT_MS membatasi total waktu (default 45 detik, nilai valid 5.000–120.000 ms); menaikkannya tidak memperpanjang batas 12 detik per model. Saat menunggu AI, bot memakai indikator mengetik WhatsApp tanpa notifikasi timer terpisah agar tidak ada pesan menunggu yang muncul setelah jawaban. Jika kedua model gagal, Rara memakai panduan umum dengan pemberitahuan.
 Dokumentasi: [Gemini generateContent](https://ai.google.dev/api/generate-content).
 
+
+## Tampilan menu & susunan jawaban
+- **Sapaan pertama** dikirim sebagai banner `assets/banner-rara.png` + **menu polling** yang bisa diketuk (WhatsApp tidak mengizinkan tombol untuk akun non-API resmi, jadi polling dipakai sebagai gantinya). Angka 1–6 tetap bisa diketik. Atur dengan `MENU_INTERAKTIF=true/false`.
+- Saat mencari faskes, jenis faskes juga dipilih lewat polling.
+- **Susunan jawaban konsultasi:**
+  1. *Tahap menggali* — tanggapan singkat atas jawaban pengguna → satu pertanyaan lanjutan (usia, durasi, suhu, riwayat/alergi, obat). Tanpa peringatan berulang.
+  2. *Tahap rekomendasi* — 📋 data keluhan → 🔍 kemungkinan penyebab → ✅ yang bisa dilakukan sekarang → 🩺 kapan ke dokter → 🚨 tanda bahaya & ajakan ke IGD/119 di paling bawah.
+- Kondisi darurat (nyeri dada, sesak berat, pingsan, dll.) tetap langsung dibalas nomor 119/112 tanpa menunggu tahap apa pun.
+
 ## Menu dan perintah
 | Input | Layanan |
 |---|---|

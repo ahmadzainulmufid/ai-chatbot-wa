@@ -148,7 +148,8 @@ async function proses(id, input, kirimSementara) {
   K.catat(s, teks);
   const pertanyaan = asesmen.berikutnya(s);
 
-  const ai = await tanyaAI(s.history, teks, s.mode, asesmen.konteks(s));
+  const tahap = pertanyaan ? 'menggali' : 'rekomendasi';
+  const ai = await tanyaAI(s.history, teks, s.mode, { ...asesmen.konteks(s), tahap });
   sesiStore.tambahRiwayat(s, 'user', teks);
 
   if (!ai) {
@@ -165,14 +166,20 @@ async function proses(id, input, kirimSementara) {
     return [balas];
   }
 
-  const masalah = mutu.periksa(ai.reply, s);
+  // Periksa semua teks yang akan dikirim, termasuk bagian terstruktur.
+  const rinci = tahap === 'rekomendasi'
+    ? { penyebab: ai.penyebab, anjuran: ai.anjuran, ke_dokter: ai.ke_dokter, tanda_bahaya: ai.tanda_bahaya }
+    : null;
+  const semuaTeks = [ai.reply, rinci?.penyebab, ...(rinci?.anjuran || []), rinci?.ke_dokter, ...(rinci?.tanda_bahaya || [])]
+    .filter(Boolean).join('\n');
+  const masalah = mutu.periksa(semuaTeks, s);
   if (masalah.length || ['konsultasi', 'solusi'].includes(ai.intent)) {
     if (masalah.length) {
       console.warn('[Mutu] Respons diganti panduan umum:', masalah.join(', '));
       ai.intent = 'konsultasi';
       ai.reply = K.cadangan(s, pertanyaan, true);
     } else {
-      ai.reply = mutu.susun(ai.reply, pertanyaan);
+      ai.reply = mutu.susun(ai.reply, pertanyaan, rinci, s);
     }
   }
   sesiStore.tambahRiwayat(s, 'assistant', ai.reply);
