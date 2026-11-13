@@ -33,8 +33,14 @@ const FASKES_POLLING = {
 const BARIS_JENIS_FASKES = /\n*Mau jenis tertentu\? Ketik:[^\n]*/;
 
 // Ubah satu balasan teks menjadi daftar kiriman (teks / gambar / polling).
-function rencanaKiriman(teks, { interaktif, adaBanner }) {
+// polling=false (bawaan): sapaan = banner + menu angka dalam SATU pesan; selebihnya teks biasa.
+// polling=true            : menu & jenis faskes dikirim sebagai polling yang bisa diketuk.
+function rencanaKiriman(teks, { interaktif, adaBanner, polling = false }) {
   if (!interaktif) return [{ tipe: 'teks', teks }];
+  if (!polling) {
+    if (teks === P.SAPAAN && adaBanner) return [{ tipe: 'gambar', caption: teks, cadangan: teks }];
+    return [{ tipe: 'teks', teks }];
+  }
   if (teks.includes(P.MENU)) {
     const sebelum = teks.replace(P.MENU, '').replace(/\n{3,}/g, '\n\n').trim();
     const kiriman = [];
@@ -56,7 +62,7 @@ function rencanaKiriman(teks, { interaktif, adaBanner }) {
   return [{ tipe: 'teks', teks }];
 }
 
-function buatPenerima({ client, handle, log = console, waktu = Date.now, interaktif = false, Poll = null, MessageMedia = null, banner = null }) {
+function buatPenerima({ client, handle, log = console, waktu = Date.now, interaktif = false, polling: pakaiPolling = false, Poll = null, MessageMedia = null, banner = null }) {
   const antrean = new Map();
   const terlihat = new Map();
   const polling = new Map(); // id pesan polling → { chatId, nilai[] }
@@ -112,7 +118,7 @@ function buatPenerima({ client, handle, log = console, waktu = Date.now, interak
       };
       const balasan = await handle(msg.from, input, kirim);
       for (const teks of balasan) {
-        for (const item of rencanaKiriman(teks, { interaktif, adaBanner })) {
+        for (const item of rencanaKiriman(teks, { interaktif, adaBanner, polling: pakaiPolling })) {
           mengirim = true;
           await kirimSatu(msg.from, item, kirim);
         }

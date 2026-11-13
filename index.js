@@ -20,7 +20,7 @@ login.pasang(client, { nomorMentah: cfg.PAIRING_NUMBER, port: cfg.PANEL_PORT, to
 
 client.on('ready', () => {
   console.log(`\n✅ ${cfg.BOT_NAME} siap! AI: ${aiAktif() ? cfg.AI_PROVIDER : 'MATI (mode cadangan kata kunci)'}` +
-    ` | Menu: ${cfg.MENU_INTERAKTIF ? 'banner + polling' : 'teks'}`);
+    ` | Menu: ${cfg.MENU_INTERAKTIF ? 'banner + ' : ''}${cfg.MENU_POLLING ? 'polling' : 'angka'}`);
 });
 
 client.on('auth_failure', (m) => console.error('❌ Login gagal:', m));
@@ -29,7 +29,8 @@ client.on('disconnected', (r) => console.log('⚠️ Terputus:', r));
 const terima = buatPenerima({
   client,
   handle,
-  interaktif: cfg.MENU_INTERAKTIF, // banner + menu polling yang bisa diketuk
+  interaktif: cfg.MENU_INTERAKTIF, // banner pada sapaan pertama
+  polling: cfg.MENU_POLLING, // menu polling (bawaan: mati, pakai menu angka)
   Poll,
   MessageMedia,
   banner: path.join(__dirname, 'assets', 'banner-rara.png'),
