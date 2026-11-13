@@ -53,7 +53,7 @@ function cadangan(s, pertanyaan, karenaMutu = false) {
   }
   s.pertanyaan = null;
   if (s.keluhan.length > 1 && pertanyaan) {
-    return pembuka + 'Terima kasih, informasinya sudah Rara catat. Jika keluhan memburuk atau Anda sulit bernapas, segera cari pertolongan medis.\n\n' + pertanyaan;
+    return pembuka + 'Terima kasih, informasinya sudah Rara catat.\n\n' + pertanyaan;
   }
   if (/^(?:[0-9]|1[0-7])\s*tahun$|bulan/.test(s.profil.usia) || /hamil|menyusui/i.test(konteks)) {
     return pembuka + 'Untuk anak, kehamilan, atau menyusui, pilihan penanganan dan obat perlu diperiksa tenaga kesehatan. Jangan menggunakan saran obat dewasa. Hubungi dokter/apoteker dan ceritakan keluhan, durasi, serta obat yang sudah digunakan.\n\nJika ada sulit bernapas, penurunan kesadaran, atau kondisi memburuk cepat, segera ke IGD. Ketik *3* untuk mencari fasilitas kesehatan.';

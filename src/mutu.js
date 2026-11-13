@@ -16,11 +16,20 @@ function periksa(reply, s) {
   return [...new Set(alasan)];
 }
 
+// Urutan balasan:
+// - Masih menggali informasi : tanggapan singkat → pertanyaan berikutnya (tanpa peringatan berulang)
+// - Informasi sudah cukup    : kemungkinan penyebab & anjuran → peringatan/CTA IGD di paling bawah
+const PERINGATAN = '⚠️ Jika keluhan memburuk atau tidak membaik, hubungi tenaga kesehatan. Jika sulit bernapas atau kesadaran menurun, segera ke IGD.';
+
 function susun(reply, pertanyaan) {
   const isi = reply.replace(/[^.!?\n]*\?/g, '').trim();
+  if (pertanyaan) {
+    const tanggapan = isi || 'Terima kasih, informasinya sudah Rara catat.';
+    return tanggapan + '\n\n' + pertanyaan;
+  }
   const aman = isi || 'Terima kasih sudah memberi informasi. Rara membantu informasi awal dan belum dapat memastikan penyebab keluhan.';
-  const peringatan = /dokter|IGD|tenaga kesehatan/i.test(aman) ? '' : '\n\nJika keluhan memburuk atau tidak membaik, hubungi tenaga kesehatan. Jika sulit bernapas atau kesadaran menurun, segera ke IGD.';
-  return aman + peringatan + (pertanyaan ? '\n\n' + pertanyaan : '\n\nKetik *ringkasan* untuk melihat catatan atau *3* untuk mencari fasilitas kesehatan.');
+  const peringatan = /IGD|gawat darurat|119/i.test(aman) ? '' : '\n\n' + PERINGATAN;
+  return aman + peringatan + '\n\nKetik *ringkasan* untuk melihat catatan atau *3* untuk mencari fasilitas kesehatan.';
 }
 
 module.exports = { periksa, susun };
