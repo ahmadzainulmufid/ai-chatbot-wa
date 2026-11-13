@@ -80,7 +80,7 @@ function buatPenerima({ client, handle, log = console, waktu = Date.now, interak
         const terkirim = await client.sendMessage(chatId, new Poll(item.judul, item.opsi.map(o => o[0]), { allowMultipleAnswers: false }));
         const id = terkirim?.id?._serialized;
         if (id) {
-          polling.set(id, { chatId, nilai: item.opsi.map(o => o[1]) });
+          polling.set(id, { chatId, nama: item.opsi.map(o => o[0]), nilai: item.opsi.map(o => o[1]) });
           if (polling.size > 1000) polling.delete(polling.keys().next().value);
         }
         return;
@@ -155,13 +155,24 @@ function buatPenerima({ client, handle, log = console, waktu = Date.now, interak
     const info = pollId && polling.get(pollId);
     const dipilih = vote?.selectedOptions?.[0];
     if (!info || !dipilih) return Promise.resolve({ status: 'ignored' }); // polling lain / pilihan dibatalkan
-    const nilai = info.nilai[dipilih.localId];
+    // Cocokkan berdasarkan nama opsi (lebih andal), localId hanya cadangan.
+    let indeks = dipilih.name ? info.nama.indexOf(String(dipilih.name).trim()) : -1;
+    if (indeks < 0 && Number.isInteger(dipilih.localId)) indeks = dipilih.localId;
+    const nilai = info.nilai[indeks];
     if (nilai === undefined) return Promise.resolve({ status: 'ignored' });
+    // WhatsApp bisa mengirim event yang sama berkali-kali (sinkron antarperangkat).
+    // Satu polling hanya diproses sekali per pilihan dalam 60 detik.
+    const sekarang = waktu();
+    if (info.terakhir && info.terakhir.nilai === nilai && sekarang - info.terakhir.waktu < 60000) {
+      return Promise.resolve({ status: 'duplicate' });
+    }
+    info.terakhir = { nilai, waktu: sekarang };
+    log.log(`Pilihan polling diterima: ${nilai}`);
     return terima({
       from: info.chatId,
       type: 'chat',
       body: nilai,
-      id: { _serialized: `pilih-${pollId}-${dipilih.localId}-${vote.interractedAtTs || waktu()}` },
+      id: { _serialized: `pilih-${pollId}-${nilai}-${sekarang}` },
       getChat: async () => client.getChatById(info.chatId),
     });
   }
