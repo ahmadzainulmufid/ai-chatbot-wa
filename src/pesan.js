@@ -1,19 +1,21 @@
 const cfg = require('./config');
 
+// Urutan menu mengikuti banner #SELARAS.
 const MENU = `Pilih layanan yang Anda butuhkan (balas angkanya):
 
-*1.* 🩺 Konsultasi Kesehatan
-*2.* 💡 Rekomendasi Solusi Keluhan
-*3.* 📍 Cari Klinik / Puskesmas / Apotek Terdekat
-*4.* 🚑 Nomor Darurat
-*5.* 📋 Ringkasan Konsultasi
-*6.* ℹ️ Tentang Rara & Privasi
+*1.* 🌿 Tentang #SELARAS
+*2.* 🌬️ Info Kualitas Udara
+*3.* 🫁 Kesehatan Pernapasan (konsultasi)
+*4.* ❤️ Tips Hidup Sehat
+*5.* 📍 Cari Klinik / Puskesmas / Apotek
+*6.* 🚑 Nomor Darurat
+*7.* 📋 Ringkasan Konsultasi
 
-Langsung ceritakan keluhan juga boleh. 😊
-Perintah: *menu*, *selesai*, *keluhan baru*, *hapus data*.
+Langsung ceritakan keluhan apa pun juga boleh. 😊
+Perintah: *menu*, *ringkasan*, *keluhan baru*, *privasi*.
 Saat konsultasi, balas *usia 25* atau *nyeri 3/10* agar angka tidak dianggap pilihan menu.`;
 
-const SAPAAN = `Halo, Salam Sehat! 👋 Saya *${cfg.BOT_NAME} — Rawat Raga*, asisten AI kesehatan di Sehatku.
+const SAPAAN = `Halo, Aku *${cfg.BOT_NAME}*! 👋 *Virtual Assistant #SELARAS* yang siap menemani kamu 24 jam.
 
 ${MENU}
 
@@ -26,7 +28,7 @@ const DARURAT = `🚑 *KONDISI DARURAT — segera cari pertolongan!*
 • Langsung ke *IGD rumah sakit* terdekat
 
 Jangan menunggu balasan chat. Bila memungkinkan, minta orang di sekitar Anda menemani.
-Ketik *3* lalu kirim lokasi untuk mencari rumah sakit terdekat.`;
+Ketik *5* lalu kirim lokasi untuk mencari rumah sakit terdekat.`;
 
 const KRISIS_JIWA = `Saya ikut prihatin Anda sedang merasa seberat ini. 💙 Anda tidak sendirian, dan perasaan ini bisa dibantu.
 
@@ -34,10 +36,47 @@ Jika Anda dalam bahaya sekarang, segera datangi IGD terdekat dan minta orang yan
 
 Kalau bisa, kabari orang yang Anda percaya untuk menemani sekarang. Saya tetap di sini kalau Anda mau bercerita.`;
 
-const TENTANG = `🌿 *Rara — Rawat Raga*
-Asisten AI Sehatku untuk tanya jawab kesehatan, perawatan awal, dan pencarian fasilitas kesehatan.
+const TENTANG = `ℹ️ *Privasi & Batasan Rara*
+Rara adalah asisten AI untuk tanya jawab kesehatan, info kualitas udara, tips hidup sehat, dan pencarian fasilitas kesehatan.
 
-Rara bukan dokter. Diagnosis, resep, jadwal dokter, pemesanan konsultasi, pembayaran, serta pengantaran obat belum tersedia. Hubungi fasilitas yang ditemukan untuk layanan tersebut.`;
+Rara bukan dokter. Diagnosis, resep, jadwal dokter, pemesanan konsultasi, pembayaran, serta pengantaran obat belum tersedia. Hubungi fasilitas yang ditemukan untuk layanan tersebut.
+Catatan konsultasi hanya disimpan sementara (hilang setelah 30 menit tidak aktif). Ketik *hapus data* untuk menghapusnya sekarang.`;
+
+const PERNAPASAN = `🫁 *Kesehatan Pernapasan*
+
+Ceritakan keluhan Anda, misalnya batuk, pilek, sesak, asma kambuh, nyeri tenggorokan, atau napas berbunyi. Sebutkan juga *sejak kapan* dan *usia* Anda.
+Contoh: _"Batuk berdahak sejak 3 hari, usia 22 tahun."_
+
+Keluhan kesehatan lain juga boleh ditanyakan. 😊
+🚨 Bila sesak berat, bibir kebiruan, atau nyeri dada, segera ke IGD / hubungi *119*.`;
+
+const TIPS = `❤️ *Tips Hidup Sehat ala Rara*
+
+🌬️ *Jaga paru-paru*
+• Cek kualitas udara sebelum beraktivitas di luar (ketik *2*). Saat udara tidak sehat, kurangi aktivitas berat di luar.
+• Pakai masker yang rapat (KN95/N95) saat polusi tinggi; masker kain kurang efektif menyaring PM2.5.
+• Jauhi asap rokok dan pembakaran sampah. Berhenti merokok adalah langkah terbaik untuk paru-paru.
+• Jaga ventilasi rumah: buka jendela saat udara baik, tutup saat polusi tinggi.
+
+🏃 *Bergerak & istirahat*
+• Aktivitas fisik intensitas sedang ±150 menit per minggu (mis. jalan cepat 30 menit, 5 hari).
+• Tidur cukup, sekitar 7–9 jam untuk orang dewasa.
+
+🥗 *Makan & minum*
+• Perbanyak sayur dan buah, kurangi gula, garam, dan lemak berlebih.
+• Minum air putih yang cukup sepanjang hari.
+
+🧼 *Cegah penularan*
+• Cuci tangan dengan sabun, tutup mulut saat batuk/bersin, pakai masker saat sakit.
+
+Mau tips khusus? Tanyakan saja, misalnya _"tips olahraga saat polusi"_ atau _"tips tidur nyenyak"_.`;
+
+const MINTA_LOKASI_UDARA = `🌬️ *Info Kualitas Udara*
+
+Silakan *kirim lokasi* Anda:
+📎 (Lampiran) → *Lokasi* → *Kirim lokasi Anda saat ini*
+
+Atau ketik nama daerah, contoh: _Depok_, _Cilodong Depok_, atau _Jakarta Selatan_.`;
 
 const MINTA_LOKASI = (jenis) => `Baik, saya carikan ${jenis === 'semua' ? 'klinik, puskesmas, apotek & RS' : jenis} terdekat. 📍
 
@@ -51,6 +90,7 @@ Mau jenis tertentu? Ketik: *apotek*, *puskesmas*, *klinik*, atau *rs*.`;
 const RE_DARURAT = /(nyeri|sakit) (di )?dada|dada\b.{0,20}\b(nyeri|sakit|sesak|tertekan|ditekan)|dada (sesak|tertekan|nyeri)|sesak (napas|nafas) (berat|parah|hebat)|tidak bisa (bernapas|bernafas|napas|nafas)|pingsan|tidak sadar|kejang|stroke|bicara pelo|wajah (mencong|miring)|lumpuh (mendadak|sebelah)|perdarahan (hebat|banyak)|pendarahan (hebat|banyak)|muntah darah|keracunan|overdosis|digigit ular|kecelakaan/i;
 const RE_KRISIS = /bunuh diri|ingin mati|pengen mati|pengin mati|mau mati aja|mengakhiri hidup|akhiri hidup|menyakiti diri|self ?harm/i;
 const RE_TERIMA_KASIH = /^(terima ?kasih|makasih|trims|thanks|thank you|ok(e|ey)?|sip|siap|baik)\b/i;
+const RE_UDARA = /kualitas udara|polusi(?: udara)?|\baqi\b|\bispu\b|indeks udara|udara (?:hari ini|sekarang|di)/i;
 const RE_SAPA = /^(hai|halo|hallo|hi|hello|p|ping|assalamu|selamat (pagi|siang|sore|malam)|mulai|start|menu)\b/i;
 
 function adalahPenutup(teks) {
@@ -71,4 +111,4 @@ function deteksiJenisFaskes(teks) {
   return null;
 }
 
-module.exports = { MENU, SAPAAN, DARURAT, KRISIS_JIWA, TENTANG, MINTA_LOKASI, RE_DARURAT, RE_KRISIS, RE_SAPA, RE_TERIMA_KASIH, deteksiJenisFaskes, adalahPenutup };
+module.exports = { MENU, SAPAAN, DARURAT, KRISIS_JIWA, TENTANG, PERNAPASAN, TIPS, MINTA_LOKASI_UDARA, RE_UDARA, MINTA_LOKASI, RE_DARURAT, RE_KRISIS, RE_SAPA, RE_TERIMA_KASIH, deteksiJenisFaskes, adalahPenutup };

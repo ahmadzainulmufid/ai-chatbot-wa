@@ -30,10 +30,10 @@ const terima = buatPenerima({
   client,
   handle,
   interaktif: cfg.MENU_INTERAKTIF, // banner pada sapaan pertama
-  polling: cfg.MENU_POLLING, // menu polling (bawaan: mati, pakai menu angka)
+  polling: cfg.MENU_POLLING, // menu polling yang bisa diketuk
   Poll,
   MessageMedia,
-  banner: path.join(__dirname, 'assets', 'banner-rara.png'),
+  banner: path.resolve(__dirname, cfg.BANNER_FILE),
 });
 client.on('message', terima);
 client.on('vote_update', terima.pilihan); // pilihan polling diproses seperti pesan

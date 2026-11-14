@@ -19,8 +19,10 @@ module.exports = {
   CHROME_PATH: process.env.CHROME_PATH || '', // VPS: /usr/bin/google-chrome
   // MENU_INTERAKTIF=true → sapaan pertama memakai banner gambar (menu angka di keterangannya).
   MENU_INTERAKTIF: !/^(false|0|tidak|no)$/i.test(process.env.MENU_INTERAKTIF || 'true'),
-  // MENU_POLLING=true → menu dikirim sebagai polling yang bisa diketuk (bawaan: false = menu angka).
-  MENU_POLLING: /^(true|1|ya|yes)$/i.test(process.env.MENU_POLLING || 'false'),
+  // MENU_POLLING=true (bawaan) → menu dikirim sebagai polling yang bisa diketuk. false → menu angka.
+  MENU_POLLING: !/^(false|0|tidak|no)$/i.test(process.env.MENU_POLLING || 'true'),
+  // Gambar banner sapaan pertama (relatif terhadap folder proyek).
+  BANNER_FILE: process.env.BANNER_FILE || 'assets/banner-selaras.jpg',
 
   BOT_NAME: process.env.BOT_NAME || 'Rara',
   AI_TIMEOUT_MS: Number.isFinite(batasAI) && batasAI >= 5000 && batasAI <= 120000 ? Math.round(batasAI) : 45000,

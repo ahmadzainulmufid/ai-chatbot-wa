@@ -56,7 +56,7 @@ function cadangan(s, pertanyaan, karenaMutu = false) {
     return pembuka + 'Terima kasih, informasinya sudah Rara catat.\n\n' + pertanyaan;
   }
   if (/^(?:[0-9]|1[0-7])\s*tahun$|bulan/.test(s.profil.usia) || /hamil|menyusui/i.test(konteks)) {
-    return pembuka + 'Untuk anak, kehamilan, atau menyusui, pilihan penanganan dan obat perlu diperiksa tenaga kesehatan. Jangan menggunakan saran obat dewasa. Hubungi dokter/apoteker dan ceritakan keluhan, durasi, serta obat yang sudah digunakan.\n\nJika ada sulit bernapas, penurunan kesadaran, atau kondisi memburuk cepat, segera ke IGD. Ketik *3* untuk mencari fasilitas kesehatan.';
+    return pembuka + 'Untuk anak, kehamilan, atau menyusui, pilihan penanganan dan obat perlu diperiksa tenaga kesehatan. Jangan menggunakan saran obat dewasa. Hubungi dokter/apoteker dan ceritakan keluhan, durasi, serta obat yang sudah digunakan.\n\nJika ada sulit bernapas, penurunan kesadaran, atau kondisi memburuk cepat, segera ke IGD. Ketik *5* untuk mencari fasilitas kesehatan.';
   }
   const sakitKepalaMenetap = cocok?.judul === 'Sakit Kepala' && /(?:3|4|5|6|7|8|9|\d{2,})\s*hari|minggu|bulan/i.test(s.profil.durasi);
   if (!cocok) {

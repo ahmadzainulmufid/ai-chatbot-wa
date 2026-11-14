@@ -24,7 +24,7 @@ test('skrining alergi, negasi, dan prioritas darurat', async () => {
   assert.match((await handle(id, { teks: 'gatal dan bentol setelah makan udang sejak 1 jam, usia 25' })).join(''), /sulit menelan/);
   assert.doesNotMatch((await handle(id, { teks: 'tidak sesak dan tidak ada bengkak bibir' })).join(''), /KONDISI DARURAT/);
   assert.match((await handle(id, { teks: 'tidak sesak, tapi lidah bengkak' })).join(''), /KONDISI DARURAT/);
-  assert.match((await handle(id, { teks: '3' })).join(''), /rumah sakit/);
+  assert.match((await handle(id, { teks: '5' })).join(''), /rumah sakit/);
 });
 
 test('durasi sehari-hari tidak ditanyakan ulang dan usia bayi bukan durasi', async () => {

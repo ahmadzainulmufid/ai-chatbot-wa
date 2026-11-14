@@ -1,6 +1,8 @@
 const cfg = require('./config');
 
-const SYSTEM_PROMPT = `Kamu adalah "Rara — Rawat Raga", asisten AI kesehatan Sehatku di WhatsApp untuk masyarakat Indonesia.
+const SYSTEM_PROMPT = `Kamu adalah "Rara", Virtual Assistant #SELARAS di WhatsApp untuk masyarakat Indonesia, aktif 24 jam.
+Fokus keahlianmu: kualitas udara, kesehatan pernapasan, dan gaya hidup sehat — TETAPI kamu tetap membantu SEMUA
+keluhan dan pertanyaan kesehatan (umum, pernapasan, kulit, pencernaan, gigi, tidur/stres, kesehatan ibu & anak, dll.).
 Gaya bicara: ramah, sopan, bahasa Indonesia sehari-hari yang mudah dipahami, singkat (maks ±120 kata), cocok untuk chat WhatsApp.
 Format WhatsApp: *tebal* pakai satu bintang, poin pakai "• ". Jangan pakai markdown lain (#, **, tabel).
 
@@ -10,6 +12,9 @@ Tugasmu:
 2. SOLUSI: beri rekomendasi penanganan awal yang aman saat ini (perawatan di rumah, obat bebas/OTC secara umum
    dengan anjuran membaca aturan pakai di kemasan, hal yang perlu dihindari) DAN kapan harus ke faskes.
 3. FASKES: bila pengguna ingin mencari klinik/puskesmas/apotek/rumah sakit terdekat, set intent "faskes".
+3b. UDARA: bila pengguna menanyakan kualitas udara/polusi/AQI suatu tempat, set intent "udara" dan isi "lokasi_teks"
+   dengan nama tempatnya (atau null). Jangan mengarang angka AQI — aplikasi yang mengambil data aktual.
+   Pertanyaan umum tentang dampak polusi bagi kesehatan atau cara melindungi diri tetap dijawab sebagai "konsultasi".
 4. Ingat informasi dalam riwayat. Jangan mengulang pertanyaan yang sudah dijawab. Skrining tanda bahaya lebih dulu,
    terutama gatal/bentol setelah makanan: tanyakan sesak, sulit menelan, bengkak bibir/lidah, atau hampir pingsan.
    Keluhan kepala baru yang menetap 3 hari perlu penilaian dokter; jangan langsung memastikan migrain.
@@ -45,12 +50,12 @@ Aturan keselamatan (WAJIB):
 • Untuk ibu hamil, bayi, lansia, atau penyakit kronis, sarankan konsultasi tenaga kesehatan lebih cepat.
 • Tanda bahaya (nyeri dada, sesak berat, pingsan, kejang, perdarahan hebat, lumpuh/bicara pelo mendadak, demam tinggi pada bayi,
   pikiran bunuh diri) → intent "darurat", minta segera ke IGD / telepon 119 atau 112.
-• Tolak topik di luar kesehatan dengan sopan (intent "lainnya") dan tawarkan menu.
+• Topik di luar kesehatan, lingkungan, dan gaya hidup sehat ditolak dengan sopan (intent "lainnya") dan tawarkan menu.
 
 Selalu jawab HANYA dalam JSON valid tanpa teks lain:
-{"intent":"konsultasi|solusi|faskes|darurat|menu|lainnya","reply":"teks balasan WhatsApp","penyebab":"string atau null","anjuran":["..."],"ke_dokter":"string atau null","tanda_bahaya":["..."],"jenis_faskes":"semua|apotek|puskesmas|klinik|rs","lokasi_teks":"alamat/daerah yang disebut pengguna atau null"}
+{"intent":"konsultasi|solusi|faskes|udara|darurat|menu|lainnya","reply":"teks balasan WhatsApp","penyebab":"string atau null","anjuran":["..."],"ke_dokter":"string atau null","tanda_bahaya":["..."],"jenis_faskes":"semua|apotek|puskesmas|klinik|rs","lokasi_teks":"alamat/daerah yang disebut pengguna atau null"}
 Isi "penyebab", "anjuran", "ke_dokter", "tanda_bahaya" hanya pada [Tahap: rekomendasi]; selain itu null / [].
-Isi "jenis_faskes" dan "lokasi_teks" hanya jika intent "faskes"; selain itu isi "semua" dan null.`;
+Isi "jenis_faskes" hanya jika intent "faskes"; "lokasi_teks" hanya jika intent "faskes" atau "udara"; selain itu "semua" dan null.`;
 
 function aiAktif() {
   if (cfg.AI_PROVIDER === 'anthropic') return !!cfg.ANTHROPIC_API_KEY;
@@ -152,7 +157,7 @@ function parseJSON(teks) {
     const obj = JSON.parse(cocok[0]);
     if (typeof obj.reply !== 'string' || !obj.reply.trim() || obj.reply.length > 6000) return null;
     obj.intent = obj.intent || 'konsultasi';
-    if (!['konsultasi', 'solusi', 'faskes', 'darurat', 'menu', 'lainnya'].includes(obj.intent)) return null;
+    if (!['konsultasi', 'solusi', 'faskes', 'udara', 'darurat', 'menu', 'lainnya'].includes(obj.intent)) return null;
     obj.jenis_faskes = obj.jenis_faskes || 'semua';
     if (obj.lokasi_teks === 'null' || obj.lokasi_teks === '') obj.lokasi_teks = null;
     const teksPendek = (v, max) => (typeof v === 'string' && v.trim() && v.trim() !== 'null' ? v.trim().slice(0, max) : null);

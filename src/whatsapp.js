@@ -7,15 +7,17 @@
 // Bila polling/gambar gagal dikirim, otomatis kembali ke teks biasa.
 const P = require('./pesan');
 
+// Pilihan polling mengikuti banner #SELARAS (4 fitur utama) + faskes & darurat.
+// Ringkasan (7) dan privasi tetap bisa diketik.
 const MENU_POLLING = {
-  judul: 'Pilih layanan Rara 👇 (ketuk salah satu, atau langsung ketik keluhan Anda)',
+  judul: 'Pilih layanan Rara 👇',
   opsi: [
-    ['🩺 Konsultasi Kesehatan', '1'],
-    ['💡 Rekomendasi Solusi Keluhan', '2'],
-    ['📍 Cari Klinik / Puskesmas / Apotek', '3'],
-    ['🚑 Nomor Darurat', '4'],
-    ['📋 Ringkasan Konsultasi', '5'],
-    ['ℹ️ Tentang Rara & Privasi', '6'],
+    ['🌿 Tentang #SELARAS', '1'],
+    ['🌬️ Info Kualitas Udara', '2'],
+    ['🫁 Kesehatan Pernapasan', '3'],
+    ['❤️ Tips Hidup Sehat', '4'],
+    ['📍 Cari Klinik / Puskesmas / Apotek', '5'],
+    ['🚑 Nomor Darurat', '6'],
   ],
 };
 
@@ -45,7 +47,7 @@ function rencanaKiriman(teks, { interaktif, adaBanner, polling = false }) {
     const sebelum = teks.replace(P.MENU, '').replace(/\n{3,}/g, '\n\n').trim();
     const kiriman = [];
     if (teks === P.SAPAAN) {
-      const sapaan = sebelum + '\n\nKetuk pilihan pada polling di bawah 👇 atau langsung ceritakan keluhan Anda.\nPerintah: *menu*, *ringkasan*, *keluhan baru*.';
+      const sapaan = sebelum + '\n\nKetuk salah satu pilihan di bawah 👇 atau langsung ceritakan keluhan Anda.\nPerintah: *menu*, *ringkasan*, *keluhan baru*.';
       kiriman.push(adaBanner ? { tipe: 'gambar', caption: sapaan, cadangan: sapaan } : { tipe: 'teks', teks: sapaan });
     } else if (sebelum) {
       kiriman.push({ tipe: 'teks', teks: sebelum });

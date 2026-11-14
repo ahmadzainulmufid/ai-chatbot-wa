@@ -30,11 +30,11 @@ test('mode teks (default) tidak berubah', () => {
 
 test('sapaan pertama: banner bergambar lalu menu polling', async () => {
   const k = klienPalsu();
-  const terima = buatPenerima({ client: k, handle, log, interaktif: true, Poll: PollPalsu, MessageMedia: MediaPalsu, banner: '/banner.png' });
+  const terima = buatPenerima({ client: k, handle, log, interaktif: true, polling: true, Poll: PollPalsu, MessageMedia: MediaPalsu, banner: '/banner.png' });
   await terima(pesan('s1', 'halo', 'baru@lid'));
   assert.equal(k.kiriman.length, 2);
   assert.deepEqual(k.kiriman[0].isi, { media: '/banner.png' });
-  assert.match(k.kiriman[0].o.caption, /Rara[\s\S]*Ketuk pilihan/);
+  assert.match(k.kiriman[0].o.caption, /Rara[\s\S]*Ketuk salah satu/);
   assert.doesNotMatch(k.kiriman[0].o.caption, /\*1\.\*/, 'daftar angka tidak diulang di caption');
   assert.ok(k.kiriman[1].isi instanceof PollPalsu);
   assert.equal(k.kiriman[1].isi.pollOptions.length, 6);
@@ -42,13 +42,13 @@ test('sapaan pertama: banner bergambar lalu menu polling', async () => {
 
 test('memilih opsi polling diproses seperti mengetik angka', async () => {
   const k = klienPalsu();
-  const terima = buatPenerima({ client: k, handle, log, interaktif: true, Poll: PollPalsu, MessageMedia: MediaPalsu, banner: '/b.png' });
+  const terima = buatPenerima({ client: k, handle, log, interaktif: true, polling: true, Poll: PollPalsu, MessageMedia: MediaPalsu, banner: '/b.png' });
   await terima(pesan('m1', 'menu', 'pilih@lid'));
   const poll = k.kiriman.find(x => x.isi instanceof PollPalsu);
   assert.ok(poll);
   const pollId = 'pesan-' + (k.kiriman.indexOf(poll) + 1);
-  // Opsi ke-3 (localId 2) = Cari faskes → minta lokasi + polling jenis faskes
-  await terima.pilihan({ parentMessage: { id: { _serialized: pollId } }, selectedOptions: [{ localId: 2 }], interractedAtTs: 1 });
+  // Opsi ke-5 (localId 4) = Cari faskes → minta lokasi + polling jenis faskes
+  await terima.pilihan({ parentMessage: { id: { _serialized: pollId } }, selectedOptions: [{ localId: 4 }], interractedAtTs: 1 });
   const teks = k.kiriman.filter(x => typeof x.isi === 'string').map(x => x.isi).join('\n');
   assert.match(teks, /kirim lokasi/i);
   const pollFaskes = k.kiriman.filter(x => x.isi instanceof PollPalsu).at(-1);
@@ -57,14 +57,14 @@ test('memilih opsi polling diproses seperti mengetik angka', async () => {
 });
 
 test('pilihan dibatalkan atau polling asing diabaikan', async () => {
-  const terima = buatPenerima({ client: klienPalsu(), handle, log, interaktif: true, Poll: PollPalsu });
+  const terima = buatPenerima({ client: klienPalsu(), handle, log, interaktif: true, polling: true, Poll: PollPalsu });
   assert.equal((await terima.pilihan({ parentMessage: { id: { _serialized: 'tidak-dikenal' } }, selectedOptions: [{ localId: 0 }] })).status, 'ignored');
   assert.equal((await terima.pilihan({ parentMessage: { id: { _serialized: 'x' } }, selectedOptions: [] })).status, 'ignored');
 });
 
 test('polling gagal dikirim → otomatis kembali ke menu angka', async () => {
   const k = klienPalsu({ tolakPolling: true });
-  const terima = buatPenerima({ client: k, handle, log, interaktif: true, Poll: PollPalsu });
+  const terima = buatPenerima({ client: k, handle, log, interaktif: true, polling: true, Poll: PollPalsu });
   await terima(pesan('f1', 'menu', 'cadangan@lid'));
   assert.ok(k.kiriman.some(x => typeof x.isi === 'string' && x.isi.includes('*1.*')));
 });

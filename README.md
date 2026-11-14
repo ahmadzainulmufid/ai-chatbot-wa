@@ -14,26 +14,32 @@ Dokumentasi: [Gemini generateContent](https://ai.google.dev/api/generate-content
 
 
 ## Tampilan menu & susunan jawaban
-- **Sapaan pertama** dikirim sebagai banner `assets/banner-rara.png` + **menu polling** yang bisa diketuk (WhatsApp tidak mengizinkan tombol untuk akun non-API resmi, jadi polling dipakai sebagai gantinya). Angka 1–6 tetap bisa diketik. Atur dengan `MENU_INTERAKTIF=true/false`.
-- Saat mencari faskes, jenis faskes juga dipilih lewat polling.
+- **Sapaan pertama** dikirim sebagai banner `assets/banner-selaras.jpg` (Rara · Virtual Assistant #SELARAS) + **menu polling** yang bisa diketuk. WhatsApp tidak mengizinkan tombol untuk akun non-API resmi, jadi polling dipakai sebagai gantinya. Angka tetap bisa diketik.
+- Pengaturan `.env`: `MENU_INTERAKTIF` (banner), `MENU_POLLING` (polling / menu angka), `BANNER_FILE` (gambar banner).
+- Isi **Tentang #SELARAS** ada di `konten/selaras.txt` dan bisa diedit tanpa mengubah kode (langsung berlaku, tanpa restart).
+- **Info Kualitas Udara** memakai Open-Meteo Air Quality API (model CAMS, gratis untuk non-komersial, tanpa API key): indeks US AQI, PM2.5, PM10, kategori, dan anjuran.
 - **Susunan jawaban konsultasi:**
   1. *Tahap menggali* — tanggapan singkat atas jawaban pengguna → satu pertanyaan lanjutan (usia, durasi, suhu, riwayat/alergi, obat). Tanpa peringatan berulang.
   2. *Tahap rekomendasi* — 📋 data keluhan → 🔍 kemungkinan penyebab → ✅ yang bisa dilakukan sekarang → 🩺 kapan ke dokter → 🚨 tanda bahaya & ajakan ke IGD/119 di paling bawah.
-- Kondisi darurat (nyeri dada, sesak berat, pingsan, dll.) tetap langsung dibalas nomor 119/112 tanpa menunggu tahap apa pun.
+- Rara menjawab **semua keluhan kesehatan** (bukan hanya pernapasan). Kondisi darurat (nyeri dada, sesak berat, pingsan, dll.) langsung dibalas nomor 119/112.
 
 ## Menu dan perintah
 | Input | Layanan |
 |---|---|
-| 1 | Konsultasi: keluhan, usia, durasi, gejala penyerta |
-| 2 | Penanganan awal |
-| 3 | Cari klinik, puskesmas, apotek, rumah sakit |
-| 4 | Informasi darurat |
-| 5 / ringkasan / selesai | Ringkasan keterangan pengguna; selesai tidak menghapus sesi |
-| 6 / tentang / privasi / bantuan | Identitas, kemampuan, privasi |
+| 1 / tentang | Tentang #SELARAS (isi dari `konten/selaras.txt`) |
+| 2 | Info kualitas udara — kirim lokasi atau ketik nama daerah |
+| 3 / konsultasi | Kesehatan pernapasan & konsultasi keluhan apa pun |
+| 4 / tips | Tips hidup sehat |
+| 5 | Cari klinik, puskesmas, apotek, rumah sakit |
+| 6 | Informasi darurat |
+| 7 / ringkasan / selesai | Ringkasan keterangan pengguna |
+| privasi / bantuan | Privasi & batasan Rara |
 | menu / 0 | Kembali ke menu dengan catatan konsultasi tetap tersedia |
 | keluhan baru / reset / hapus data | Menghapus sesi bot dan memulai ulang |
 
-Angka 1–6 dan 0 selalu perintah menu. Jawab usia dengan *usia 3 tahun*, durasi dengan *3 hari*, dan skala dengan *nyeri 3/10*. Keluhan baru milik orang lain sebaiknya diawali *keluhan baru* agar konteks tidak tercampur.
+Polling memuat pilihan 1–6. Kalimat bebas juga dipahami, misalnya `kualitas udara di Depok` atau `cari apotek di Cilodong`.
+
+Angka 1–7 dan 0 selalu perintah menu. Jawab usia dengan *usia 3 tahun*, durasi dengan *3 hari*, dan skala dengan *nyeri 3/10*. Keluhan baru milik orang lain sebaiknya diawali *keluhan baru* agar konteks tidak tercampur.
 
 Contoh:
 - `Sudah 3 hari sakit kepala sebelah, kadang mual, usia 25`

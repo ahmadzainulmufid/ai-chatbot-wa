@@ -6,12 +6,53 @@ const P = require('./pesan');
 const K = require('./konsultasi');
 const asesmen = require('./asesmen');
 const mutu = require('./mutu');
+const udara = require('./udara');
+const fs = require('fs');
+const path = require('path');
 const antrean = new Map();
 
-const PILIHAN_MODE = {
-  '1': { mode: 'konsultasi', teks: '🩺 *Konsultasi Kesehatan*\n\nSilakan ceritakan keluhan Anda: apa yang dirasakan, sejak kapan, dan usia Anda.\nContoh: _"Saya demam sejak kemarin, badan pegal, usia 21 tahun."_' },
-  '2': { mode: 'solusi', teks: '💡 *Rekomendasi Solusi*\n\nSebutkan keluhan Anda, saya berikan saran penanganan awal yang bisa dilakukan sekarang dan kapan perlu ke dokter.\nContoh: _"sakit maag kambuh"_' },
-};
+// Isi "Tentang #SELARAS" dibaca dari konten/selaras.txt agar mudah diedit tanpa mengubah kode.
+function tentangSelaras() {
+  try {
+    const isi = fs.readFileSync(path.join(__dirname, '..', 'konten', 'selaras.txt'), 'utf8').trim();
+    if (isi) return isi;
+  } catch { /* pakai teks bawaan */ }
+  return '🌿 *Tentang #SELARAS*\n\nRara adalah Virtual Assistant #SELARAS yang membantu info kualitas udara, kesehatan pernapasan, dan tips hidup sehat.';
+}
+
+const KATA_LOKASI = /\b(tolong|saya|mau|cek|cari|carikan|info|bagaimana|gimana|kualitas|udara|polusi|aqi|ispu|indeks|hari ini|sekarang|terdekat|di|dekat|daerah|sekitar|wilayah|kota)\b/gi;
+
+async function jalankanCekUdara(s, lat, lon, namaLokasi, dariGps = false) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+    return ['Koordinat tidak valid. Kirim ulang lokasi melalui WhatsApp.'];
+  }
+  s.lokasi = { lat, lon, namaLokasi, dariGps };
+  try {
+    const data = await udara.cekUdara(lat, lon);
+    return [udara.formatUdara(data, namaLokasi)];
+  } catch (err) {
+    console.error('[Udara] Gagal:', err.message);
+    return ['Maaf, data kualitas udara sedang tidak dapat diambil. 🙏 Coba lagi beberapa saat lagi, atau cek aplikasi/kanal resmi pemantau kualitas udara di daerah Anda.'];
+  }
+}
+
+async function cekUdaraDariTeks(s, teks) {
+  s.mode = 'udara';
+  s.pertanyaan = null;
+  const alamat = teks.replace(KATA_LOKASI, ' ').replace(/[?!.,]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (alamat.length >= 3) {
+    try {
+      const titik = await faskes.geocode(alamat);
+      if (!titik) return [`Maaf, lokasi "${alamat}" tidak ditemukan. Coba tulis lebih lengkap (kecamatan + kota) atau kirim lokasi lewat 📎 → Lokasi.`];
+      return jalankanCekUdara(s, titik.lat, titik.lon, titik.nama);
+    } catch (err) {
+      console.error('[Geocode] Gagal:', err.message);
+      return ['Maaf, pencarian alamat sedang bermasalah. Silakan kirim lokasi lewat 📎 → *Lokasi* saja ya.'];
+    }
+  }
+  if (s.lokasi) return jalankanCekUdara(s, s.lokasi.lat, s.lokasi.lon, s.lokasi.namaLokasi, s.lokasi.dariGps);
+  return [P.MINTA_LOKASI_UDARA];
+}
 
 const JENIS_SAJA = /^(apotek|apotik|puskesmas|klinik|rs|rumah sakit|semua)$/i;
 
@@ -60,6 +101,7 @@ async function proses(id, input, kirimSementara) {
 
   if (input.lokasi) {
     s.baru = false;
+    if (s.mode === 'udara') return jalankanCekUdara(s, input.lokasi.lat, input.lokasi.lon, input.lokasi.nama, true);
     s.mode = 'faskes';
     return jalankanCariFaskes(s, input.lokasi.lat, input.lokasi.lon, input.lokasi.nama, true);
   }
@@ -78,8 +120,8 @@ async function proses(id, input, kirimSementara) {
   const afirmasiBahaya = s.lanjutan === 'alergi' &&
     (/^(iya|ya|ada|betul|benar)(?:\s+(?:ada|rara|kak))?[.!]*$/i.test(teks) || /\bsesak\b|sulit menelan/i.test(asesmen.keluhanAktif(teks)));
   if (K.darurat(teks) || afirmasiBahaya) { s.baru = false; s.jenisFaskes = 'rs'; s.mode = 'darurat'; return [P.DARURAT]; }
-  if (/^(5|ringkasan|selesai)$/i.test(teks)) return [K.ringkasan(s)];
-  if (/^(6|privasi|tentang|bantuan)$/i.test(teks)) return [P.TENTANG];
+  if (/^(7|ringkasan|selesai)$/i.test(teks)) return [K.ringkasan(s)];
+  if (/^(privasi|bantuan)$/i.test(teks)) return [P.TENTANG];
 
   if ((P.RE_SAPA.test(teks) && teks.length <= 30) || teks === '0') {
     const pertama = s.baru;
@@ -101,19 +143,29 @@ async function proses(id, input, kirimSementara) {
     // Pesan pertama langsung berisi keluhan → tetap diproses, tidak dipaksa lewat menu
   }
 
-  if (PILIHAN_MODE[teks]) {
-    s.mode = PILIHAN_MODE[teks].mode;
+  // ===== Menu (urutan mengikuti banner #SELARAS) =====
+  if (/^(1|tentang|tentang selaras|selaras|#selaras)$/i.test(teks)) { s.mode = null; s.pertanyaan = null; return [tentangSelaras()]; }
+  if (teks === '2') return cekUdaraDariTeks(s, '');
+  if (/^(3|konsultasi|kesehatan pernapasan|pernapasan)$/i.test(teks)) {
+    s.mode = 'konsultasi';
     s.pertanyaan = null;
     s.lanjutan = null;
-    return [PILIHAN_MODE[teks].teks];
+    return [P.PERNAPASAN];
   }
-  if (teks === '3') {
+  if (/^(4|tips|tips hidup sehat|tips sehat)$/i.test(teks)) { s.pertanyaan = null; return [P.TIPS]; }
+  if (teks === '5') {
     s.mode = 'faskes';
     s.pertanyaan = null;
     if (s.jenisFaskes !== 'rs') s.jenisFaskes = 'semua';
     return [P.MINTA_LOKASI(s.jenisFaskes === 'rs' ? 'rumah sakit' : 'semua')];
   }
-  if (teks === '4') { s.jenisFaskes = 'rs'; return [P.DARURAT]; }
+  if (teks === '6') { s.jenisFaskes = 'rs'; return [P.DARURAT]; }
+
+  // Pertanyaan kualitas udara langsung, mis. "kualitas udara di Depok"
+  if (P.RE_UDARA.test(teks) && teks.length <= 80) return cekUdaraDariTeks(s, teks);
+  // Sedang di menu udara → teks pendek dianggap nama daerah
+  if (s.mode === 'udara' && teks.length <= 60 && !BASIS.some((b) => b.kunci.test(teks))) return cekUdaraDariTeks(s, teks);
+  if (s.mode === 'udara') s.mode = 'konsultasi';
 
   const jenisEksplisit = P.deteksiJenisFaskes(teks);
   if (jenisEksplisit && (JENIS_SAJA.test(teks) || /\b(cari|carikan|terdekat|sekitar)\b/i.test(teks))) {
@@ -191,6 +243,8 @@ async function proses(id, input, kirimSementara) {
       return [ai.reply, P.DARURAT];
     case 'menu':
       return [ai.reply, P.MENU];
+    case 'udara':
+      return [ai.reply, ...(await cekUdaraDariTeks(s, ai.lokasi_teks || ''))];
     case 'faskes': {
       s.mode = 'faskes';
       s.jenisFaskes = ['apotek', 'puskesmas', 'klinik', 'rs'].includes(ai.jenis_faskes) ? ai.jenis_faskes : 'semua';

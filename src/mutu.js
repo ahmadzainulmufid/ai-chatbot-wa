@@ -27,7 +27,7 @@ const BAHAYA_UMUM = [
   'Pingsan, sangat lemas, atau kesadaran menurun',
   'Keluhan memburuk dengan cepat',
 ];
-const PENUTUP = '_Rara memberi informasi awal, bukan diagnosis dokter._\nKetik *ringkasan* untuk catatan keluhan, *3* untuk cari faskes terdekat, atau *menu*.';
+const PENUTUP = '_Rara memberi informasi awal, bukan diagnosis dokter._\nKetik *ringkasan* untuk catatan keluhan, *5* untuk cari faskes terdekat, atau *menu*.';
 
 const tanpaPertanyaan = (t) => String(t || '').replace(/[^.!?\n]*\?/g, '').trim();
 const potong = (t, n) => (t.length > n ? t.slice(0, n - 1).trim() + '…' : t);
@@ -92,7 +92,7 @@ function susun(reply, pertanyaan, rinci = null, s = null) {
   // AI tidak mengisi bagian terstruktur: tetap jaga urutan, peringatan di paling bawah.
   const aman = isi || 'Terima kasih sudah memberi informasi. Rara membantu informasi awal dan belum dapat memastikan penyebab keluhan.';
   const peringatan = /IGD|gawat darurat|119/i.test(aman) ? '' : '\n\n' + PERINGATAN;
-  return aman + peringatan + '\n\nKetik *ringkasan* untuk melihat catatan atau *3* untuk mencari fasilitas kesehatan.';
+  return aman + peringatan + '\n\nKetik *ringkasan* untuk melihat catatan atau *5* untuk mencari fasilitas kesehatan.';
 }
 
 module.exports = { periksa, susun, formatRekomendasi };
