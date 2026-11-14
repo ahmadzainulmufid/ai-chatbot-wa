@@ -20,21 +20,26 @@ function palsuFetch(aqi = 135) {
   return { panggilan, pulihkan: () => { global.fetch = lama; } };
 }
 
-test('menu mengikuti banner #SELARAS', () => {
-  for (const t of ['Tentang #SELARAS', 'Info Kualitas Udara', 'Kesehatan Pernapasan', 'Tips Hidup Sehat']) assert.ok(P.MENU.includes(t), t);
+test('menu berurutan sesuai polling', () => {
+  const urutan = ['Konsultasi Kesehatan', 'Ringkasan Kesehatan', 'Cari Klinik / Apotek', 'Nomor Darurat', 'Udara Saat Ini', 'About Me', 'Tips Hidup Sehat'];
+  const pos = urutan.map(t => P.MENU.indexOf(t));
+  assert.ok(pos.every(p => p > 0), JSON.stringify(pos));
+  assert.deepEqual([...pos].sort((a, b) => a - b), pos);
   assert.match(P.SAPAAN, /Virtual Assistant #SELARAS/);
 });
 
-test('1 = Tentang #SELARAS dari file konten, 4 = tips, 3 = pernapasan', async () => {
-  assert.match((await handle('m-tentang', { teks: '1' })).join(''), /Tentang #SELARAS/);
-  assert.match((await handle('m-tips', { teks: '4' })).join(''), /Tips Hidup Sehat/);
-  assert.match((await handle('m-napas', { teks: '3' })).join(''), /Kesehatan Pernapasan/);
+test('1 konsultasi, 2 ringkasan, 4 darurat, 6 about me (file konten), 7 tips', async () => {
+  assert.match((await handle('m-kons', { teks: '1' })).join(''), /Konsultasi Kesehatan/);
+  assert.match((await handle('m-ring', { teks: '2' })).join(''), /Belum ada konsultasi/);
+  assert.match((await handle('m-darurat', { teks: '4' })).join(''), /119/);
+  assert.match((await handle('m-about', { teks: '6' })).join(''), /About Me[\s\S]*Rara/);
+  assert.match((await handle('m-tips', { teks: '7' })).join(''), /Tips Hidup Sehat/);
 });
 
-test('2 → minta lokasi, lalu lokasi WhatsApp dipakai untuk cek kualitas udara (bukan faskes)', async () => {
+test('5 → minta lokasi, lalu lokasi WhatsApp dipakai untuk cek kualitas udara (bukan faskes)', async () => {
   const f = palsuFetch(135);
   try {
-    assert.match((await handle('udara-gps', { teks: '2' })).join(''), /kirim lokasi/i);
+    assert.match((await handle('udara-gps', { teks: '5' })).join(''), /kirim lokasi/i);
     const hasil = (await handle('udara-gps', { lokasi: { lat: -6.4, lon: 106.82 } })).join('');
     assert.match(hasil, /Kualitas Udara/);
     assert.match(hasil, /AQI \*135\*/);
@@ -56,7 +61,7 @@ test('"kualitas udara di Depok" langsung dicek tanpa lewat menu', async () => {
 });
 
 test('keluhan kesehatan saat di menu udara tetap dijawab sebagai konsultasi', async () => {
-  await handle('udara-keluhan', { teks: '2' });
+  await handle('udara-keluhan', { teks: '5' });
   const hasil = (await handle('udara-keluhan', { teks: 'batuk berdahak sejak 3 hari, usia 25' })).join('');
   assert.doesNotMatch(hasil, /Kualitas Udara —/);
   assert.match(hasil, /Batuk/);

@@ -47,8 +47,8 @@ test('memilih opsi polling diproses seperti mengetik angka', async () => {
   const poll = k.kiriman.find(x => x.isi instanceof PollPalsu);
   assert.ok(poll);
   const pollId = 'pesan-' + (k.kiriman.indexOf(poll) + 1);
-  // Opsi ke-5 (localId 4) = Cari faskes → minta lokasi + polling jenis faskes
-  await terima.pilihan({ parentMessage: { id: { _serialized: pollId } }, selectedOptions: [{ localId: 4 }], interractedAtTs: 1 });
+  // Opsi ke-3 (localId 2) = Cari klinik/apotek → minta lokasi + polling jenis faskes
+  await terima.pilihan({ parentMessage: { id: { _serialized: pollId } }, selectedOptions: [{ localId: 2 }], interractedAtTs: 1 });
   const teks = k.kiriman.filter(x => typeof x.isi === 'string').map(x => x.isi).join('\n');
   assert.match(teks, /kirim lokasi/i);
   const pollFaskes = k.kiriman.filter(x => x.isi instanceof PollPalsu).at(-1);

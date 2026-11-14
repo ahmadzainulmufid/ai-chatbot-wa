@@ -120,7 +120,7 @@ async function proses(id, input, kirimSementara) {
   const afirmasiBahaya = s.lanjutan === 'alergi' &&
     (/^(iya|ya|ada|betul|benar)(?:\s+(?:ada|rara|kak))?[.!]*$/i.test(teks) || /\bsesak\b|sulit menelan/i.test(asesmen.keluhanAktif(teks)));
   if (K.darurat(teks) || afirmasiBahaya) { s.baru = false; s.jenisFaskes = 'rs'; s.mode = 'darurat'; return [P.DARURAT]; }
-  if (/^(7|ringkasan|selesai)$/i.test(teks)) return [K.ringkasan(s)];
+  if (/^(2|ringkasan|ringkasan kesehatan|selesai)$/i.test(teks)) return [K.ringkasan(s)];
   if (/^(privasi|bantuan)$/i.test(teks)) return [P.TENTANG];
 
   if ((P.RE_SAPA.test(teks) && teks.length <= 30) || teks === '0') {
@@ -143,23 +143,23 @@ async function proses(id, input, kirimSementara) {
     // Pesan pertama langsung berisi keluhan → tetap diproses, tidak dipaksa lewat menu
   }
 
-  // ===== Menu (urutan mengikuti banner #SELARAS) =====
-  if (/^(1|tentang|tentang selaras|selaras|#selaras)$/i.test(teks)) { s.mode = null; s.pertanyaan = null; return [tentangSelaras()]; }
-  if (teks === '2') return cekUdaraDariTeks(s, '');
-  if (/^(3|konsultasi|kesehatan pernapasan|pernapasan)$/i.test(teks)) {
+  // ===== Menu (sama dengan urutan polling) =====
+  if (/^(1|konsultasi|konsultasi kesehatan|pernapasan|kesehatan pernapasan)$/i.test(teks)) {
     s.mode = 'konsultasi';
     s.pertanyaan = null;
     s.lanjutan = null;
-    return [P.PERNAPASAN];
+    return [P.KONSULTASI];
   }
-  if (/^(4|tips|tips hidup sehat|tips sehat)$/i.test(teks)) { s.pertanyaan = null; return [P.TIPS]; }
-  if (teks === '5') {
+  if (/^(3|cari klinik|cari apotek|cari faskes|cari klinik \/ apotek)$/i.test(teks)) {
     s.mode = 'faskes';
     s.pertanyaan = null;
     if (s.jenisFaskes !== 'rs') s.jenisFaskes = 'semua';
     return [P.MINTA_LOKASI(s.jenisFaskes === 'rs' ? 'rumah sakit' : 'semua')];
   }
-  if (teks === '6') { s.jenisFaskes = 'rs'; return [P.DARURAT]; }
+  if (/^(4|darurat|nomor darurat)$/i.test(teks)) { s.jenisFaskes = 'rs'; return [P.DARURAT]; }
+  if (/^(5|udara|udara saat ini|cek udara)$/i.test(teks)) return cekUdaraDariTeks(s, '');
+  if (/^(6|about|about me|tentang|tentang rara|tentang selaras|selaras|#selaras)$/i.test(teks)) { s.mode = null; s.pertanyaan = null; return [tentangSelaras()]; }
+  if (/^(7|tips|tips hidup sehat|tips sehat)$/i.test(teks)) { s.pertanyaan = null; return [P.TIPS]; }
 
   // Pertanyaan kualitas udara langsung, mis. "kualitas udara di Depok"
   if (P.RE_UDARA.test(teks) && teks.length <= 80) return cekUdaraDariTeks(s, teks);

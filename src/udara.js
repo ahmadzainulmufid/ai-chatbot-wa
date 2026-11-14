@@ -1,73 +1,98 @@
-// Info kualitas udara memakai Open-Meteo Air Quality API (gratis untuk non-komersial, tanpa API key).
-// Data berasal dari model CAMS (perkiraan, resolusi ±11–45 km), bukan stasiun pengukur resmi.
-// Indeks yang dipakai: US AQI (standar US EPA) + konsentrasi PM2.5 dan PM10.
+function periksa(reply, s) {
+  const alasan = [];
+  if (typeof reply !== 'string' || !reply.trim() || reply.length > 4000) return ['format'];
+  if (/\b(pasti|dipastikan|dijamin sembuh)\b|(?:diagnosis|diagnosa)\s+(?:anda\s+)?(?:adalah|pasti)|(?:anda|kamu|kakak)\s+(?:menderita|terkena)\s+/i.test(reply)) alasan.push('kepastian diagnosis');
+  if (/\b\d+(?:[.,]\d+)?\s*(?:mg|ml|tablet|kapsul)\b|\b\d+\s*(?:x|kali)\s*(?:sehari|per hari)/i.test(reply)) alasan.push('dosis personal');
+  for (const kalimat of reply.split(/[.!?\n]/)) {
+    if (/antibiotik|amoksisilin|amoxicillin|azitromisin|azithromycin|dexamethasone|deksametason|prednison|prednisone|diazepam/i.test(kalimat) &&
+        !/jangan|tidak (?:perlu|boleh|disarankan)|dokter|resep/i.test(kalimat)) alasan.push('obat resep');
+  }
+  if (/(?:hindari|dilarang|jangan (?:makan|minum)|pantang)[^.\n]{0,80}(?:gorengan|makanan manis|air dingin|minuman dingin)/i.test(reply)) alasan.push('pantangan tanpa dasar');
+  if (/tidak perlu (?:ke |periksa |menemui )?dokter|cukup di rumah saja|aman untuk semua|istirahat total/i.test(reply)) alasan.push('jaminan atau anjuran berlebihan');
+  const umur = s.profil.usia || '';
+  const dewasa = /^\d+ tahun$/.test(umur) && Number(umur.split(' ')[0]) >= 18;
+  if (/parasetamol|paracetamol|ibuprofen|antasida|antihistamin/i.test(reply) &&
+      (!dewasa || !s.asesmen?.risiko || !s.asesmen?.obat || /hamil|menyusui/.test(s.asesmen.risiko))) alasan.push('obat sebelum asesmen cukup');
+  return [...new Set(alasan)];
+}
 
-const URL_API = 'https://air-quality-api.open-meteo.com/v1/air-quality';
-const cache = new Map(); // hasil disimpan 30 menit per lokasi
-
-// Kategori US AQI + anjuran praktis.
-const KATEGORI = [
-  { maks: 50, label: 'Baik', ikon: '🟢', anjuran: [
-    'Udara aman untuk beraktivitas di luar ruangan.',
-    'Waktu yang baik untuk olahraga di luar dan membuka jendela agar sirkulasi udara lancar.',
-  ] },
-  { maks: 100, label: 'Sedang', ikon: '🟡', anjuran: [
-    'Umumnya aman untuk beraktivitas di luar.',
-    'Orang yang sangat sensitif (asma, penyakit paru/jantung) sebaiknya mengurangi aktivitas berat yang lama di luar.',
-  ] },
-  { maks: 150, label: 'Tidak sehat bagi kelompok sensitif', ikon: '🟠', anjuran: [
-    'Anak-anak, lansia, ibu hamil, dan penderita asma/penyakit paru/jantung sebaiknya mengurangi aktivitas lama di luar.',
-    'Gunakan masker yang rapat (mis. KN95/N95) bila harus lama di luar.',
-    'Penderita asma: bawa obat pereda sesuai anjuran dokter.',
-  ] },
-  { maks: 200, label: 'Tidak sehat', ikon: '🔴', anjuran: [
-    'Kurangi aktivitas berat di luar ruangan untuk semua orang.',
-    'Pakai masker yang rapat (KN95/N95) saat di luar; masker kain kurang efektif menyaring PM2.5.',
-    'Tutup jendela saat polusi tinggi dan pindahkan olahraga ke dalam ruangan.',
-  ] },
-  { maks: 300, label: 'Sangat tidak sehat', ikon: '🟣', anjuran: [
-    'Hindari aktivitas di luar ruangan bila memungkinkan.',
-    'Tetap di dalam ruangan dengan jendela tertutup; pakai pembersih udara bila ada.',
-    'Kelompok sensitif sebaiknya tidak keluar rumah kecuali perlu.',
-  ] },
-  { maks: Infinity, label: 'Berbahaya', ikon: '🟤', anjuran: [
-    'Tetap di dalam ruangan dan hindari semua aktivitas di luar.',
-    'Ikuti arahan pemerintah/otoritas setempat.',
-  ] },
+// Susunan balasan Rara:
+//   Tahap menggali     : tanggapan singkat → pertanyaan berikutnya (tanpa peringatan berulang)
+//   Tahap rekomendasi  : pembuka → 📋 data keluhan → 🔍 kemungkinan penyebab → ✅ yang bisa dilakukan sekarang
+//                        → 🩺 kapan ke dokter → 🚨 tanda bahaya / CTA IGD (paling bawah) → menu lanjutan
+const PERINGATAN = '⚠️ Jika keluhan memburuk atau tidak membaik, hubungi tenaga kesehatan. Jika sulit bernapas atau kesadaran menurun, segera ke IGD.';
+const BAHAYA_UMUM = [
+  'Sesak napas, napas berat, atau bibir kebiruan',
+  'Nyeri dada atau jantung berdebar hebat',
+  'Pingsan, sangat lemas, atau kesadaran menurun',
+  'Keluhan memburuk dengan cepat',
 ];
+const PENUTUP = '_Rara memberi informasi awal, bukan diagnosis dokter._\nKetik *ringkasan* untuk catatan keluhan, *3* untuk cari faskes terdekat, atau *menu*.';
 
-function kategori(aqi) {
-  return KATEGORI.find(k => aqi <= k.maks);
+const tanpaPertanyaan = (t) => String(t || '').replace(/[^.!?\n]*\?/g, '').trim();
+const potong = (t, n) => (t.length > n ? t.slice(0, n - 1).trim() + '…' : t);
+
+function dataKeluhan(s) {
+  if (!s) return [];
+  const p = s.profil || {}, a = s.asesmen || {};
+  return [
+    p.usia && `Usia: ${p.usia}`,
+    p.durasi && `Durasi: ${p.durasi}`,
+    a.suhu && `Suhu: ${a.suhu.replace(' (keterangan pengguna)', '')}`,
+    p.nyeri && `Skala nyeri: ${p.nyeri}`,
+    a.obat && `Sudah dicoba: ${/^(?:tidak(?: ada)?|belum(?: ada| minum obat)?|nggak|gak|ga)$/i.test(a.obat.trim()) ? 'belum ada obat/penanganan' : potong(a.obat, 60)}`,
+  ].filter(Boolean);
 }
 
-async function cekUdara(lat, lon) {
-  const kunci = `${lat.toFixed(2)},${lon.toFixed(2)}`;
-  const c = cache.get(kunci);
-  if (c && Date.now() - c.waktu < 30 * 60000) return c.data;
-  const url = `${URL_API}?latitude=${lat}&longitude=${lon}&current=us_aqi,pm2_5,pm10&timezone=Asia%2FJakarta`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-  if (!res.ok) throw new Error(`Open-Meteo ${res.status}`);
-  const json = await res.json();
-  const cur = json.current || {};
-  if (!Number.isFinite(cur.us_aqi)) throw new Error('Data AQI tidak tersedia');
-  const data = { aqi: Math.round(cur.us_aqi), pm25: cur.pm2_5, pm10: cur.pm10, waktu: cur.time || null };
-  cache.set(kunci, { waktu: Date.now(), data });
-  return data;
+/**
+ * Menyusun jawaban akhir yang lengkap. Dipakai untuk balasan AI maupun mode cadangan.
+ * @param {object} r { pembuka, judul, penyebab, anjuran[], keDokter, tandaBahaya[], pertanyaan, s }
+ */
+function formatRekomendasi(r) {
+  const bagian = [];
+  if (r.pembuka) bagian.push(r.pembuka);
+  if (r.judul) bagian.push(r.judul);
+  const data = dataKeluhan(r.s);
+  if (data.length) bagian.push('📋 *Data keluhan*\n' + data.map(d => '• ' + d).join('\n'));
+  if (r.penyebab) bagian.push('🔍 *Kemungkinan penyebab*\n' + r.penyebab);
+  if (r.anjuran?.length) bagian.push('✅ *Yang bisa dilakukan sekarang*\n' + r.anjuran.map(x => '• ' + x).join('\n'));
+  if (r.keDokter) {
+    const kd = r.keDokter.replace(/^(?:bila|jika|apabila|kalau)\s+/i, '');
+    bagian.push('🩺 *Periksa ke dokter/puskesmas bila*\n' + kd.charAt(0).toUpperCase() + kd.slice(1));
+  }
+  if (r.pertanyaan) bagian.push(r.pertanyaan);
+  const bahaya = r.tandaBahaya?.length ? r.tandaBahaya : BAHAYA_UMUM;
+  bagian.push('🚨 *Segera ke IGD atau hubungi 119 bila:*\n' + bahaya.map(x => '• ' + x).join('\n'));
+  bagian.push(PENUTUP);
+  return bagian.join('\n\n');
 }
 
-function formatUdara(d, namaLokasi) {
-  const k = kategori(d.aqi);
-  const tempat = namaLokasi ? namaLokasi.split(',').slice(0, 2).join(',').trim() : 'lokasi Anda';
-  const jam = d.waktu ? ` (pukul ${String(d.waktu).slice(11, 16)} WIB)` : '';
-  const angka = (v) => (Number.isFinite(v) ? v.toFixed(1).replace('.', ',') : '-');
-  return `🌬️ *Kualitas Udara — ${tempat}*${jam}\n\n` +
-    `${k.ikon} *${k.label}* · AQI *${d.aqi}*\n` +
-    `• PM2.5: ${angka(d.pm25)} µg/m³\n` +
-    `• PM10: ${angka(d.pm10)} µg/m³\n\n` +
-    `✅ *Anjuran*\n${k.anjuran.map(a => '• ' + a).join('\n')}\n\n` +
-    '🚨 Bila muncul sesak napas berat, nyeri dada, atau bibir kebiruan, segera ke IGD / hubungi *119*.\n\n' +
-    '_Perkiraan model CAMS via Open-Meteo (indeks US AQI), bisa berbeda dari stasiun pengukur resmi setempat._\n' +
-    'Ketik *3* untuk konsultasi kesehatan pernapasan atau *menu* untuk layanan lain.';
+/**
+ * @param {string} reply       balasan utama AI
+ * @param {string|null} pertanyaan  pertanyaan lanjutan dari aplikasi (null = data cukup)
+ * @param {object} [rinci]     field terstruktur dari AI (penyebab, anjuran, ke_dokter, tanda_bahaya)
+ * @param {object} [s]         sesi pengguna (untuk ringkasan data keluhan)
+ */
+function susun(reply, pertanyaan, rinci = null, s = null) {
+  const isi = tanpaPertanyaan(reply);
+  if (pertanyaan) {
+    const tanggapan = isi || 'Terima kasih, informasinya sudah Rara catat.';
+    return tanggapan + '\n\n' + pertanyaan;
+  }
+  if (rinci && (rinci.penyebab || rinci.anjuran?.length)) {
+    return formatRekomendasi({
+      pembuka: isi,
+      penyebab: tanpaPertanyaan(rinci.penyebab),
+      anjuran: (rinci.anjuran || []).map(tanpaPertanyaan).filter(Boolean),
+      keDokter: tanpaPertanyaan(rinci.ke_dokter),
+      tandaBahaya: (rinci.tanda_bahaya || []).map(tanpaPertanyaan).filter(Boolean),
+      s,
+    });
+  }
+  // AI tidak mengisi bagian terstruktur: tetap jaga urutan, peringatan di paling bawah.
+  const aman = isi || 'Terima kasih sudah memberi informasi. Rara membantu informasi awal dan belum dapat memastikan penyebab keluhan.';
+  const peringatan = /IGD|gawat darurat|119/i.test(aman) ? '' : '\n\n' + PERINGATAN;
+  return aman + peringatan + '\n\nKetik *ringkasan* untuk melihat catatan atau *3* untuk mencari fasilitas kesehatan.';
 }
 
-module.exports = { cekUdara, formatUdara, kategori };
+module.exports = { periksa, susun, formatRekomendasi };

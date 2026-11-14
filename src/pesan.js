@@ -1,15 +1,15 @@
 const cfg = require('./config');
 
-// Urutan menu mengikuti banner #SELARAS.
+// Urutan menu = urutan pilihan polling (lihat MENU_POLLING di whatsapp.js).
 const MENU = `Pilih layanan yang Anda butuhkan (balas angkanya):
 
-*1.* 🌿 Tentang #SELARAS
-*2.* 🌬️ Info Kualitas Udara
-*3.* 🫁 Kesehatan Pernapasan (konsultasi)
-*4.* ❤️ Tips Hidup Sehat
-*5.* 📍 Cari Klinik / Puskesmas / Apotek
-*6.* 🚑 Nomor Darurat
-*7.* 📋 Ringkasan Konsultasi
+*1.* 🩺 Konsultasi Kesehatan
+*2.* 📋 Ringkasan Kesehatan
+*3.* 📍 Cari Klinik / Apotek
+*4.* 🚑 Nomor Darurat
+*5.* 🌬️ Udara Saat Ini
+*6.* 🙋‍♀️ About Me
+*7.* ❤️ Tips Hidup Sehat
 
 Langsung ceritakan keluhan apa pun juga boleh. 😊
 Perintah: *menu*, *ringkasan*, *keluhan baru*, *privasi*.
@@ -28,7 +28,7 @@ const DARURAT = `🚑 *KONDISI DARURAT — segera cari pertolongan!*
 • Langsung ke *IGD rumah sakit* terdekat
 
 Jangan menunggu balasan chat. Bila memungkinkan, minta orang di sekitar Anda menemani.
-Ketik *5* lalu kirim lokasi untuk mencari rumah sakit terdekat.`;
+Ketik *3* lalu kirim lokasi untuk mencari rumah sakit terdekat.`;
 
 const KRISIS_JIWA = `Saya ikut prihatin Anda sedang merasa seberat ini. 💙 Anda tidak sendirian, dan perasaan ini bisa dibantu.
 
@@ -42,18 +42,16 @@ Rara adalah asisten AI untuk tanya jawab kesehatan, info kualitas udara, tips hi
 Rara bukan dokter. Diagnosis, resep, jadwal dokter, pemesanan konsultasi, pembayaran, serta pengantaran obat belum tersedia. Hubungi fasilitas yang ditemukan untuk layanan tersebut.
 Catatan konsultasi hanya disimpan sementara (hilang setelah 30 menit tidak aktif). Ketik *hapus data* untuk menghapusnya sekarang.`;
 
-const PERNAPASAN = `🫁 *Kesehatan Pernapasan*
+const KONSULTASI = `🩺 *Konsultasi Kesehatan*
 
-Ceritakan keluhan Anda, misalnya batuk, pilek, sesak, asma kambuh, nyeri tenggorokan, atau napas berbunyi. Sebutkan juga *sejak kapan* dan *usia* Anda.
+Ceritakan keluhan Anda: apa yang dirasakan, *sejak kapan*, dan *usia* Anda. Semua keluhan boleh ditanyakan, termasuk keluhan pernapasan seperti batuk, pilek, sesak, atau asma kambuh.
 Contoh: _"Batuk berdahak sejak 3 hari, usia 22 tahun."_
-
-Keluhan kesehatan lain juga boleh ditanyakan. 😊
 🚨 Bila sesak berat, bibir kebiruan, atau nyeri dada, segera ke IGD / hubungi *119*.`;
 
 const TIPS = `❤️ *Tips Hidup Sehat ala Rara*
 
 🌬️ *Jaga paru-paru*
-• Cek kualitas udara sebelum beraktivitas di luar (ketik *2*). Saat udara tidak sehat, kurangi aktivitas berat di luar.
+• Cek kualitas udara sebelum beraktivitas di luar (ketik *5*). Saat udara tidak sehat, kurangi aktivitas berat di luar.
 • Pakai masker yang rapat (KN95/N95) saat polusi tinggi; masker kain kurang efektif menyaring PM2.5.
 • Jauhi asap rokok dan pembakaran sampah. Berhenti merokok adalah langkah terbaik untuk paru-paru.
 • Jaga ventilasi rumah: buka jendela saat udara baik, tutup saat polusi tinggi.
@@ -111,4 +109,4 @@ function deteksiJenisFaskes(teks) {
   return null;
 }
 
-module.exports = { MENU, SAPAAN, DARURAT, KRISIS_JIWA, TENTANG, PERNAPASAN, TIPS, MINTA_LOKASI_UDARA, RE_UDARA, MINTA_LOKASI, RE_DARURAT, RE_KRISIS, RE_SAPA, RE_TERIMA_KASIH, deteksiJenisFaskes, adalahPenutup };
+module.exports = { MENU, SAPAAN, DARURAT, KRISIS_JIWA, TENTANG, KONSULTASI, PERNAPASAN: KONSULTASI, TIPS, MINTA_LOKASI_UDARA, RE_UDARA, MINTA_LOKASI, RE_DARURAT, RE_KRISIS, RE_SAPA, RE_TERIMA_KASIH, deteksiJenisFaskes, adalahPenutup };

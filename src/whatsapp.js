@@ -7,17 +7,17 @@
 // Bila polling/gambar gagal dikirim, otomatis kembali ke teks biasa.
 const P = require('./pesan');
 
-// Pilihan polling mengikuti banner #SELARAS (4 fitur utama) + faskes & darurat.
-// Ringkasan (7) dan privasi tetap bisa diketik.
+// Pilihan polling. Nilainya = nomor menu (P.MENU), jadi mengetuk sama dengan mengetik angkanya.
+// Tips hidup sehat (7) dan privasi tetap bisa diketik.
 const MENU_POLLING = {
   judul: 'Pilih layanan Rara 👇',
   opsi: [
-    ['🌿 Tentang #SELARAS', '1'],
-    ['🌬️ Info Kualitas Udara', '2'],
-    ['🫁 Kesehatan Pernapasan', '3'],
-    ['❤️ Tips Hidup Sehat', '4'],
-    ['📍 Cari Klinik / Puskesmas / Apotek', '5'],
-    ['🚑 Nomor Darurat', '6'],
+    ['🩺 Konsultasi Kesehatan', '1'],
+    ['📋 Ringkasan Kesehatan', '2'],
+    ['📍 Cari Klinik / Apotek', '3'],
+    ['🚑 Nomor Darurat', '4'],
+    ['🌬️ Udara Saat Ini', '5'],
+    ['🙋‍♀️ About Me', '6'],
   ],
 };
 

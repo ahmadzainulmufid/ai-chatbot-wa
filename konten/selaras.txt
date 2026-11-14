@@ -1,11 +1,13 @@
-🌿 *Tentang #SELARAS*
+🙋‍♀️ *About Me*
 
-Rara adalah *Virtual Assistant #SELARAS* di WhatsApp yang siap menemani Anda menjaga kesehatan pernapasan dan hidup sehat, *24 jam*.
+Halo, aku *Rara*, *Virtual Assistant #SELARAS* di WhatsApp yang siap menemani kamu menjaga kesehatan, *24 jam*.
 
 Yang bisa Rara bantu:
-• 🌬️ Info kualitas udara di sekitar Anda
-• 🫁 Konsultasi awal keluhan kesehatan, terutama pernapasan
-• ❤️ Tips hidup sehat sehari-hari
+• 🩺 Konsultasi awal keluhan kesehatan apa pun, termasuk pernapasan
+• 📋 Ringkasan keluhan untuk dibawa saat periksa ke dokter
 • 📍 Mencari klinik, puskesmas, apotek, dan rumah sakit terdekat
+• 🚑 Nomor darurat
+• 🌬️ Info kualitas udara di sekitar kamu
+• ❤️ Tips hidup sehat (ketik *tips*)
 
 _Rara memberi informasi awal dan bukan pengganti pemeriksaan dokter._
