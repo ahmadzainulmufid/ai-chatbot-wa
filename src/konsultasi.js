@@ -4,10 +4,12 @@ function catat(s, teks) {
   s.profil ||= {};
   s.keluhan ||= [];
   if (s.pertanyaan === 'usia' && /^\d{1,3}$/.test(teks)) s.profil.usia = `${teks} tahun`;
-  const usia = teks.match(/(?:usia|umur)\s*(\d{1,3})(?:\s*(tahun|bulan))?/i);
-  if (usia) s.profil.usia = `${usia[1]} ${usia[2] || 'tahun'}`;
+  // "usia 23", "usia saya 23 tahun", "umurku 23", "usia anak saya 3 bulan"
+  const AWALAN_USIA = String.raw`(?:usia|umur)(?:ku|nya)?\s*(?:(?:saya|aku|sy|gue|gw|anak(?:\s+saya)?|sekarang|kini|baru|sudah|udah|[:=])\s*){0,3}`;
+  const usia = teks.match(new RegExp(AWALAN_USIA + String.raw`(\d{1,3})(?:\s*(tahun|thn|th|bulan|bln))?`, 'i'));
+  if (usia) s.profil.usia = `${usia[1]} ${/^b/i.test(usia[2] || '') ? 'bulan' : 'tahun'}`;
   const durasi = [...teks.matchAll(/(?:sejak\s+|sudah\s+|selama\s+)?\d+\s*(?:hari|minggu|bulan|jam|menit)\b/gi)]
-    .find(m => !/(?:usia|umur)\s*$/i.test(teks.slice(0, m.index)));
+    .find(m => !new RegExp(AWALAN_USIA + '$', 'i').test(teks.slice(0, m.index)));
   const relatif = teks.match(/\b(?:(?:sejak|dari|mulai)\s+)?(?:kemarin(?:\s+(?:pagi|siang|sore|malam))?|tadi(?:\s+(?:pagi|siang|sore|malam))?|hari ini|barusan|semalam|sejak kecil|sejak lama)\b/i);
   if (durasi || relatif) s.profil.durasi = (durasi || relatif)[0];
   const nyeri = teks.match(/(?:nyeri|skala)\s*(\d{1,2})(?:\s*\/\s*10)?/i);
