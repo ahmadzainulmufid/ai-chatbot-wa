@@ -31,7 +31,7 @@ async function jalankanCekUdara(s, lat, lon, namaLokasi, dariGps = false) {
     const data = await udara.cekUdara(lat, lon);
     return [udara.formatUdara(data, namaLokasi)];
   } catch (err) {
-    console.error('[Udara] Gagal:', err.message);
+    console.error('[Udara] Gagal:', err.name === 'TimeoutError' ? 'timeout ke Open-Meteo' : err.message);
     return ['Maaf, data kualitas udara sedang tidak dapat diambil. 🙏 Coba lagi beberapa saat lagi, atau cek aplikasi/kanal resmi pemantau kualitas udara di daerah Anda.'];
   }
 }
