@@ -12,7 +12,9 @@ const MENU = `Pilih layanan yang Anda butuhkan (balas angkanya):
 *7.* ❤️ Tips Hidup Sehat
 
 Langsung ceritakan keluhan apa pun juga boleh. 😊
+
 Perintah: *menu*, *ringkasan*, *keluhan baru*, *privasi*.
+
 Saat konsultasi, balas *usia 25* atau *nyeri 3/10* agar angka tidak dianggap pilihan menu.`;
 
 const SAPAAN = `Halo, Aku *${cfg.BOT_NAME}*! 👋 *Virtual Assistant #SELARAS* yang siap menemani kamu 24 jam.
@@ -28,6 +30,7 @@ const DARURAT = `🚑 *KONDISI DARURAT — segera cari pertolongan!*
 • Langsung ke *IGD rumah sakit* terdekat
 
 Jangan menunggu balasan chat. Bila memungkinkan, minta orang di sekitar Anda menemani.
+
 Ketik *3* lalu kirim lokasi untuk mencari rumah sakit terdekat.`;
 
 const KRISIS_JIWA = `Saya ikut prihatin Anda sedang merasa seberat ini. 💙 Anda tidak sendirian, dan perasaan ini bisa dibantu.
@@ -37,15 +40,19 @@ Jika Anda dalam bahaya sekarang, segera datangi IGD terdekat dan minta orang yan
 Kalau bisa, kabari orang yang Anda percaya untuk menemani sekarang. Saya tetap di sini kalau Anda mau bercerita.`;
 
 const TENTANG = `ℹ️ *Privasi & Batasan Rara*
+
 Rara adalah asisten AI untuk tanya jawab kesehatan, info kualitas udara, tips hidup sehat, dan pencarian fasilitas kesehatan.
 
 Rara bukan dokter. Diagnosis, resep, jadwal dokter, pemesanan konsultasi, pembayaran, serta pengantaran obat belum tersedia. Hubungi fasilitas yang ditemukan untuk layanan tersebut.
+
 Catatan konsultasi hanya disimpan sementara (hilang setelah 30 menit tidak aktif). Ketik *hapus data* untuk menghapusnya sekarang.`;
 
 const KONSULTASI = `🩺 *Konsultasi Kesehatan*
 
 Ceritakan keluhan Anda: apa yang dirasakan, *sejak kapan*, dan *usia* Anda. Semua keluhan boleh ditanyakan, termasuk keluhan pernapasan seperti batuk, pilek, sesak, atau asma kambuh.
+
 Contoh: _"Batuk berdahak sejak 3 hari, usia 22 tahun."_
+
 🚨 Bila sesak berat, bibir kebiruan, atau nyeri dada, segera ke IGD / hubungi *119*.`;
 
 const TIPS = `❤️ *Tips Hidup Sehat ala Rara*
